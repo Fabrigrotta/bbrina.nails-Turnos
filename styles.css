@@ -64,6 +64,35 @@ img { max-width: 100%; display: block; }
 a { color: inherit; text-decoration: none; }
 button { font-family: inherit; }
 
+/* ── Foco accesible y consistente ──
+   Solo aparece en navegación por teclado (:focus-visible), no al hacer
+   click con mouse, para no ensuciar la estética. */
+.btn:focus-visible,
+.nav-cuenta:focus-visible,
+.header-nav a:focus-visible,
+.calendario-nav-btn:focus-visible,
+.calendario-hoy-btn:focus-visible,
+.calendario-dia:focus-visible,
+.servicio-item:focus-visible,
+.horario-item:focus-visible,
+.admin-filtro:focus-visible,
+.admin-select:focus-visible,
+.admin-card-acciones .btn:focus-visible,
+.reserva-codigo-btn:focus-visible,
+.acerca-red:focus-visible,
+.acerca-cta-btn:focus-visible,
+.modal-acciones .btn:focus-visible {
+  outline: 2px solid var(--rosa-500);
+  outline-offset: 2px;
+}
+
+.field input:focus-visible,
+.field textarea:focus-visible,
+.admin-filtros-label + .admin-select:focus-visible {
+  outline: 2px solid var(--rosa-500);
+  outline-offset: 2px;
+}
+
 /* ── Container ── */
 .container {
   width: 100%;
@@ -252,6 +281,56 @@ button { font-family: inherit; }
   object-fit: cover;
 }
 
+/* ── Fallback visual cuando la imagen del hero no carga ── */
+.hero-media-fallback {
+  position: absolute;
+  inset: 0;
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  background: linear-gradient(135deg, var(--rosa-100), var(--dorado-soft));
+  color: var(--rosa-700);
+  text-align: center;
+  padding: 24px;
+}
+
+.hero-media-marco.img-fallback .hero-media-fallback {
+  display: flex;
+}
+
+.hero-media-fallback-emoji {
+  font-size: 3.4rem;
+  line-height: 1;
+  filter: drop-shadow(0 4px 12px rgba(125, 60, 80, 0.25));
+}
+
+.hero-media-fallback-marca {
+  font-family: var(--fuente-titulo);
+  font-size: 1.6rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--rosa-700);
+}
+
+/* ── Fallback del avatar en "Acerca de" ── */
+.acerca-avatar-fallback {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  font-family: var(--fuente-titulo);
+  font-size: 4rem;
+  font-weight: 600;
+  color: var(--blanco);
+}
+
+.acerca-avatar.img-fallback .acerca-avatar-fallback {
+  display: flex;
+}
+
 /* Decoración de fondo */
 .hero-deco {
   position: absolute;
@@ -359,6 +438,18 @@ button { font-family: inherit; }
   margin: 0 0 12px;
 }
 
+/* Jerarquía especial: "Reservar" es la acción principal del sitio.
+   Le damos más peso visual que al resto de las secciones. */
+#reservar .section-header h2 {
+  font-size: clamp(2.1rem, 4vw, 2.9rem);
+  font-weight: 700;
+}
+
+#reservar .section-header .section-tag {
+  color: var(--rosa-500);
+  font-weight: 600;
+}
+
 .section-text {
   color: var(--texto-soft);
   font-size: 0.98rem;
@@ -433,6 +524,15 @@ button { font-family: inherit; }
   background: var(--blanco);
 }
 
+/* Al navegar con teclado, agregamos anillo de foco además del cambio
+   de borde, para que sea bien visible sobre cualquier fondo. */
+.field input:focus-visible,
+.field textarea:focus-visible {
+  outline: 2px solid var(--rosa-500);
+  outline-offset: 2px;
+  border-color: var(--rosa-500);
+}
+
 .field input::placeholder,
 .field textarea::placeholder {
   color: #b8a5ac;
@@ -471,7 +571,40 @@ button { font-family: inherit; }
 .servicio-item.selected {
   border-color: var(--rosa-500);
   background: var(--rosa-100);
-  box-shadow: var(--sombra-sm);
+  box-shadow: 0 6px 18px rgba(140, 74, 93, 0.16);
+  transform: translateY(-2px);
+}
+
+/* Check ✓ en la esquina superior derecha cuando el servicio está seleccionado */
+.servicio-item.selected::after {
+  content: '✓';
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--rosa-500), var(--rosa-700));
+  color: var(--blanco);
+  font-size: 0.72rem;
+  font-weight: 700;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 6px rgba(125, 60, 80, 0.3);
+  animation: servicioCheckIn 0.22s ease-out both;
+}
+
+@keyframes servicioCheckIn {
+  from {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 
 .servicio-item .servicio-nombre {
@@ -760,6 +893,25 @@ button { font-family: inherit; }
   color: var(--blanco);
   font-size: 1.6rem;
   font-weight: 700;
+  position: relative;
+}
+
+/* Animación de "celebración" solo cuando el modal está visible */
+#reserva-exitosa:not([hidden]) .check-icon {
+  animation:
+    checkPop 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) both,
+    checkPulse 1.4s ease-out 0.35s 1 both;
+}
+
+@keyframes checkPop {
+  0%   { transform: scale(0);    opacity: 0; }
+  60%  { transform: scale(1.15); opacity: 1; }
+  100% { transform: scale(1);    opacity: 1; }
+}
+
+@keyframes checkPulse {
+  0%   { box-shadow: 0 0 0 0 rgba(189, 88, 120, 0.45); }
+  100% { box-shadow: 0 0 0 22px rgba(189, 88, 120, 0); }
 }
 
 .reserva-exitosa h3 {
@@ -1703,7 +1855,9 @@ button { font-family: inherit; }
 @media (prefers-reduced-motion: reduce) {
   .anim-fade-up,
   .anim-fade,
-  .modal-card {
+  .modal-card,
+  .servicio-item.selected::after,
+  #reserva-exitosa:not([hidden]) .check-icon {
     animation: none !important;
   }
 }
