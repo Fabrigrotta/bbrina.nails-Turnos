@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Modo administrador · bbrina.nails</title>
+  <meta name="robots" content="noindex, nofollow" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Poppins:wght@300;400;500;600&display=swap"
+    rel="stylesheet"
+  />
+
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+  <!-- ═══════════════ HEADER ADMIN ═══════════════ -->
+  <header class="site-header">
+    <div class="container header-inner">
+      <a href="index.html" class="brand">
+        <span class="brand-main">bbrina.nails</span>
+        <span class="brand-sub">Panel</span>
+      </a>
+      <nav class="header-nav">
+        <a href="index.html">← Volver al sitio</a>
+        <a href="#" id="btn-logout">Cerrar sesión</a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- ═══════════════ BADGE MODO ADMIN ═══════════════ -->
+  <div class="admin-badge-wrapper">
+    <span class="admin-badge">
+      <span class="admin-badge-dot" aria-hidden="true"></span>
+      Modo administrador
+    </span>
+  </div>
+
+  <!-- ═══════════════ PANEL ═══════════════ -->
+  <main id="admin-panel" class="section admin-panel">
+    <div class="container">
+
+      <header class="section-header admin-panel-header">
+        <span class="section-tag">Tus turnos</span>
+        <h2>Reservas</h2>
+        <p class="section-text">Gestioná los turnos: editalos, moveos de fecha/horario o cancelalos.</p>
+      </header>
+
+      <!-- ── Bloque 1: Últimos turnos reservados ── -->
+      <section class="admin-bloque">
+        <header class="admin-bloque-header">
+          <h3 class="admin-bloque-titulo">Últimos turnos reservados</h3>
+          <span class="admin-bloque-contador" id="admin-contador-recientes">— reservas</span>
+        </header>
+
+        <div id="admin-lista-recientes" class="admin-lista">
+          <!-- Render desde admin.js -->
+        </div>
+
+        <p id="admin-vacio-recientes" class="admin-vacio" hidden>Todavía no hay reservas.</p>
+      </section>
+
+      <!-- ── Bloque 2: Todos los turnos ── -->
+      <section class="admin-bloque">
+        <header class="admin-bloque-header">
+          <h3 class="admin-bloque-titulo">Todos los turnos</h3>
+          <span class="admin-bloque-contador" id="admin-contador">— reservas</span>
+        </header>
+
+        <div class="admin-filtros">
+          <button type="button" class="admin-filtro active" data-filtro="todas">Todas</button>
+          <button type="button" class="admin-filtro" data-filtro="proximas">Próximas</button>
+          <button type="button" class="admin-filtro" data-filtro="pasadas">Pasadas</button>
+        </div>
+
+        <div id="admin-lista" class="admin-lista">
+          <!-- Render desde admin.js -->
+        </div>
+
+        <p id="admin-vacio" class="admin-vacio" hidden>No hay reservas para mostrar.</p>
+      </section>
+
+    </div>
+  </main>
+
+  <!-- ═══════════════ MODAL EDITAR ═══════════════ -->
+  <div id="modal-editar" class="modal" hidden>
+    <div class="modal-backdrop" data-close="modal-editar"></div>
+    <div class="modal-card card">
+      <h3 class="modal-titulo">Editar turno</h3>
+      <p class="modal-subtitulo" id="modal-editar-codigo">—</p>
+
+      <div class="field">
+        <label for="edit-nombre">Nombre</label>
+        <input type="text" id="edit-nombre" />
+      </div>
+      <div class="field">
+        <label for="edit-whatsapp">WhatsApp</label>
+        <input type="tel" id="edit-whatsapp" />
+      </div>
+      <div class="field">
+        <label for="edit-nota">Nota</label>
+        <textarea id="edit-nota" rows="3"></textarea>
+      </div>
+
+      <p id="edit-error" class="form-error" role="alert" hidden></p>
+
+      <div class="modal-acciones">
+        <button type="button" class="btn btn-secondary" data-close="modal-editar">Cancelar</button>
+        <button type="button" class="btn btn-primary" id="btn-guardar-edicion">Guardar cambios</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════ MODAL MOVER ═══════════════ -->
+  <div id="modal-mover" class="modal" hidden>
+    <div class="modal-backdrop" data-close="modal-mover"></div>
+    <div class="modal-card card">
+      <h3 class="modal-titulo">Mover turno</h3>
+      <p class="modal-subtitulo" id="modal-mover-codigo">—</p>
+
+      <div class="field">
+        <label for="mover-fecha">Nueva fecha</label>
+        <input type="date" id="mover-fecha" />
+      </div>
+      <div class="field">
+        <label for="mover-horario">Nuevo horario</label>
+        <select id="mover-horario"></select>
+      </div>
+
+      <p id="mover-error" class="form-error" role="alert" hidden></p>
+
+      <div class="modal-acciones">
+        <button type="button" class="btn btn-secondary" data-close="modal-mover">Cancelar</button>
+        <button type="button" class="btn btn-primary" id="btn-guardar-mover">Guardar cambios</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════ MODAL CANCELAR ═══════════════ -->
+  <div id="modal-cancelar" class="modal" hidden>
+    <div class="modal-backdrop" data-close="modal-cancelar"></div>
+    <div class="modal-card card">
+      <h3 class="modal-titulo">Cancelar turno</h3>
+      <p class="modal-subtitulo" id="modal-cancelar-codigo">—</p>
+      <p class="modal-texto">Esta acción elimina la reserva y libera el horario. ¿Continuar?</p>
+
+      <div class="modal-acciones">
+        <button type="button" class="btn btn-secondary" data-close="modal-cancelar">Volver</button>
+        <button type="button" class="btn btn-primary" id="btn-confirmar-cancelar">Sí, cancelar</button>
+      </div>
+    </div>
+  </div>
+
+  <footer class="site-footer">
+    <div class="container footer-inner">
+      <p>© <span id="year"></span> bbrina.nails · Panel</p>
+      <p class="footer-note">Solo para la manicura</p>
+    </div>
+  </footer>
+
+  <script src="admin.js"></script>
+</body>
+</html>

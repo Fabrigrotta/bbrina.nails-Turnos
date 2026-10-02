@@ -1043,3 +1043,324 @@ button { font-family: inherit; }
 
   .footer-inner { justify-content: center; text-align: center; }
 }
+
+/* ═══════════════════════════════════════════════════════════
+   ADMIN · Panel de reservas
+   ═══════════════════════════════════════════════════════════ */
+
+/* Login */
+.admin-login .form-login {
+  max-width: 420px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* Panel */
+.admin-panel-header { margin-bottom: 24px; }
+
+.admin-filtros {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+
+.admin-filtro {
+  border: 1.5px solid var(--rosa-100);
+  background: var(--blanco);
+  color: var(--texto-soft);
+  border-radius: var(--radius-full);
+  padding: 8px 18px;
+  font-family: inherit;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.admin-filtro:hover {
+  border-color: var(--rosa-300);
+  color: var(--rosa-700);
+}
+
+.admin-filtro.active {
+  background: linear-gradient(135deg, var(--rosa-500), var(--rosa-700));
+  color: var(--blanco);
+  border-color: transparent;
+}
+
+.admin-contador {
+  text-align: center;
+  color: var(--texto-soft);
+  font-size: 0.9rem;
+  margin: 0 0 20px;
+}
+
+.admin-lista {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 16px;
+}
+
+.admin-vacio {
+  text-align: center;
+  color: var(--texto-soft);
+  font-style: italic;
+  font-size: 0.95rem;
+  padding: 40px 0;
+  margin: 0;
+}
+
+/* Card de reserva */
+.admin-card {
+  background: var(--blanco);
+  border: 1px solid var(--rosa-100);
+  border-radius: var(--radius-md);
+  padding: 20px;
+  box-shadow: var(--sombra-sm);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.admin-card-pasada {
+  opacity: 0.7;
+}
+
+.admin-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.admin-card-codigo {
+  font-family: var(--fuente-titulo);
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--rosa-700);
+  letter-spacing: 0.04em;
+}
+
+.admin-card-badge {
+  font-size: 0.7rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  font-weight: 600;
+  color: var(--dorado);
+  background: var(--rosa-50);
+  border: 1px solid var(--rosa-100);
+  border-radius: var(--radius-full);
+  padding: 4px 10px;
+}
+
+.admin-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  border-top: 1px dashed var(--rosa-100);
+  border-bottom: 1px dashed var(--rosa-100);
+  padding: 12px 0;
+}
+
+.admin-row {
+  display: flex;
+  gap: 10px;
+  font-size: 0.88rem;
+  line-height: 1.4;
+}
+
+.admin-row-key {
+  color: var(--texto-soft);
+  font-weight: 500;
+  min-width: 74px;
+  flex-shrink: 0;
+}
+
+.admin-row-val {
+  color: var(--texto);
+  word-break: break-word;
+}
+
+.admin-card-acciones {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.admin-btn-sm {
+  padding: 8px 16px;
+  font-size: 0.82rem;
+}
+
+.admin-btn-danger {
+  color: #b23a48;
+  border-color: #f5c6cf;
+}
+
+.admin-btn-danger:hover {
+  background: #fdecef;
+}
+
+/* Modales */
+.modal {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(61, 42, 48, 0.45);
+  backdrop-filter: blur(4px);
+}
+
+.modal-card {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 460px;
+  max-height: calc(100vh - 40px);
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.modal-titulo {
+  font-family: var(--fuente-titulo);
+  font-size: 1.35rem;
+  font-weight: 600;
+  color: var(--rosa-700);
+  margin: 0;
+}
+
+.modal-subtitulo {
+  font-size: 0.85rem;
+  color: var(--texto-soft);
+  margin: -6px 0 4px;
+  letter-spacing: 0.03em;
+}
+
+.modal-texto {
+  font-size: 0.92rem;
+  color: var(--texto);
+  margin: 0;
+}
+
+.modal-acciones {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  margin-top: 6px;
+}
+
+.modal-acciones .btn {
+  flex: 1 1 auto;
+  min-width: 120px;
+  padding: 12px 20px;
+  font-size: 0.88rem;
+}
+
+@media (max-width: 480px) {
+  .admin-lista { grid-template-columns: 1fr; }
+  .modal-acciones { flex-direction: column; }
+  .modal-acciones .btn { width: 100%; }
+}
+
+/* ── Ícono de cuenta en el header ── */
+.nav-cuenta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--rosa-50);
+  border: 1.5px solid var(--rosa-100);
+  color: var(--texto-soft);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  padding: 0;
+  margin-left: 4px;
+}
+
+.nav-cuenta:hover {
+  background: var(--rosa-100);
+  border-color: var(--rosa-300);
+  color: var(--rosa-700);
+}
+
+/* ── Badge "Modo administrador" ── */
+.admin-badge-wrapper {
+  display: flex;
+  justify-content: center;
+  padding: 22px 20px 0;
+}
+
+.admin-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.75rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  font-weight: 600;
+  color: var(--rosa-700);
+  background: linear-gradient(135deg, var(--rosa-50), var(--rosa-100));
+  border: 1px solid var(--rosa-200);
+  border-radius: var(--radius-full);
+  padding: 8px 18px;
+  box-shadow: var(--sombra-sm);
+}
+
+.admin-badge-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #4caf82;
+  box-shadow: 0 0 0 3px rgba(76, 175, 130, 0.2);
+}
+
+/* ── Bloques del panel admin ── */
+.admin-bloque {
+  margin-bottom: 56px;
+}
+
+.admin-bloque:last-child {
+  margin-bottom: 0;
+}
+
+.admin-bloque-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding-bottom: 12px;
+  margin-bottom: 20px;
+  border-bottom: 1px solid var(--rosa-100);
+}
+
+.admin-bloque-titulo {
+  font-family: var(--fuente-titulo);
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: var(--rosa-700);
+  margin: 0;
+}
+
+.admin-bloque-contador {
+  font-size: 0.85rem;
+  color: var(--texto-soft);
+  font-weight: 500;
+}
