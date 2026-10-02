@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>bbrina.nails · Turnos</title>
+  <meta name="description" content="Reservá tu turno en bbrina.nails. Kapping, semipermanente, esculpidas y más." />
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Poppins:wght@300;400;500;600&display=swap"
+    rel="stylesheet"
+  />
+
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+  <!-- ═══════════════ HEADER ═══════════════ -->
+  <header class="site-header">
+    <div class="container header-inner">
+      <a href="#" class="brand">
+        <span class="brand-main">bbrina.nails</span>
+        <span class="brand-sub">Turnos</span>
+      </a>
+      <nav class="header-nav">
+        <a href="#reservar">Reservar</a>
+        <a href="#info">Info</a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- ═══════════════ HERO ═══════════════ -->
+  <section class="hero">
+    <div class="container hero-inner">
+      <span class="hero-tag">Nail Studio</span>
+      <h1 class="hero-title">
+        Tus uñas, <em>tu momento</em>.
+      </h1>
+      <p class="hero-text">
+        Elegí el servicio, la fecha y el horario. Te confirmamos por WhatsApp.
+      </p>
+      <a href="#reservar" class="btn btn-primary">Reservar turno</a>
+    </div>
+    <div class="hero-deco" aria-hidden="true">
+      <span></span><span></span><span></span>
+    </div>
+  </section>
+
+  <!-- ═══════════════ FORMULARIO DE RESERVA ═══════════════ -->
+  <main>
+    <section id="reservar" class="section reservar">
+      <div class="container">
+        <header class="section-header" id="reservar-header">
+          <span class="section-tag">Reservá online</span>
+          <h2>Elegí tu turno</h2>
+          <p class="section-text">Completá los datos y te enviamos la confirmación por WhatsApp.</p>
+        </header>
+
+        <form id="form-turno" class="card form-turno" novalidate>
+
+          <!-- Paso 1: Servicio -->
+          <fieldset class="field-group">
+            <legend class="field-legend">1. Elegí el servicio</legend>
+            <div id="servicios-grid" class="servicios-grid">
+              <!-- Render dinámico desde app.js -->
+            </div>
+          </fieldset>
+
+          <!-- Paso 2: Fecha -->
+          <fieldset class="field-group">
+            <legend class="field-legend">2. Elegí la fecha</legend>
+            <div id="calendario" class="calendario">
+              <!-- Render dinámico desde script.js -->
+            </div>
+          </fieldset>
+
+          <!-- Paso 3: Horario -->
+          <fieldset class="field-group">
+            <legend class="field-legend">3. Elegí el horario</legend>
+            <div id="horarios-grid" class="horarios-grid">
+              <!-- Render dinámico desde app.js -->
+              <p class="hint">Elegí primero una fecha para ver los horarios disponibles.</p>
+            </div>
+          </fieldset>
+
+          <!-- Paso 4: Datos -->
+          <fieldset class="field-group">
+            <legend class="field-legend">4. Tus datos</legend>
+            <div class="field-row">
+              <div class="field">
+                <label for="input-nombre">Nombre y apellido</label>
+                <input type="text" id="input-nombre" name="nombre" placeholder="Ej: Bruna Pérez" required />
+              </div>
+              <div class="field">
+                <label for="input-whatsapp">WhatsApp</label>
+                <input type="tel" id="input-whatsapp" name="whatsapp" placeholder="Ej: 11 2345 6789" required />
+              </div>
+            </div>
+            <div class="field">
+              <label for="input-nota">Nota (opcional)</label>
+              <textarea id="input-nota" name="nota" rows="3" placeholder="Ej: Vengo con diseño personalizado, referencia por IG, etc."></textarea>
+            </div>
+          </fieldset>
+
+          <!-- Error global -->
+          <p id="form-error" class="form-error" role="alert" hidden></p>
+
+          <!-- Submit -->
+          <button type="submit" class="btn btn-primary btn-block">
+            Reservar por WhatsApp
+          </button>
+          <p class="form-disclaimer">
+            Al reservar, se abrirá WhatsApp con el mensaje prearmado para confirmar tu turno.
+          </p>
+        </form>
+
+        <!-- Resumen post-reserva (oculto por defecto) -->
+        <div id="reserva-exitosa" class="card reserva-exitosa" hidden>
+          <span class="check-icon" aria-hidden="true">✓</span>
+            <h3>¡Turno confirmado!</h3>
+          <p id="reserva-resumen" class="reserva-resumen"></p>
+            <button type="button" id="btn-nueva-reserva" class="btn btn-secondary">
+              Aceptar
+            </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════ INFO ═══════════════ -->
+    <section id="info" class="section info">
+      <div class="container info-grid">
+        <div class="info-card">
+          <span class="info-icon">📍</span>
+          <h3>Ubicación</h3>
+          <p>A coordinar con la manicura.</p>
+        </div>
+        <div class="info-card">
+          <span class="info-icon">🕒</span>
+          <h3>Horarios</h3>
+          <p>A coordinar con la manicura.</p>
+        </div>
+        <div class="info-card">
+          <span class="info-icon">💬</span>
+          <h3>Contacto</h3>
+          <p>Confirmación directa por WhatsApp.</p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- ═══════════════ FOOTER ═══════════════ -->
+  <footer class="site-footer">
+    <div class="container footer-inner">
+      <p>© <span id="year"></span> bbrina.nails · Turnos</p>
+      <p class="footer-note">Desarrollada por Fabricio Grottasanta</p>
+    </div>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>

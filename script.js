@@ -1,0 +1,505 @@
+/* ═══════════════════════════════════════════════════════════
+   bbrina.nails · Turnos — script.js
+   v1 · mockup funcional
+   ═══════════════════════════════════════════════════════════ */
+
+/* ───────────────────────────────────────────────────────────
+   CONFIG · editá acá los datos reales cuando estén
+   ─────────────────────────────────────────────────────────── */
+const CONFIG = {
+  // Número de WhatsApp en formato internacional SIN "+" ni espacios.
+  // Ejemplo Argentina: 5491123456789
+  whatsapp: '5491100000000', // ⚠️ PLACEHOLDER · reemplazar
+
+  // Duración por defecto de cada turno (minutos)
+  duracionTurno: 60,
+
+  // Servicios disponibles (mockup · editar libremente)
+  servicios: [
+    { id: 'kapping',       nombre: 'Kapping',           duracion: 90, precio: '$—' },
+    { id: 'semipermanente',nombre: 'Semipermanente',    duracion: 60, precio: '$—' },
+    { id: 'esculpidas',    nombre: 'Esculpidas',        duracion: 120, precio: '$—' },
+    { id: 'retiro',        nombre: 'Retiro + nuevo',    duracion: 90, precio: '$—' },
+    { id: 'spa',           nombre: 'Spa de manos',      duracion: 45, precio: '$—' },
+    { id: 'diseno',        nombre: 'Diseño personalizado', duracion: 30, precio: '$—' }
+  ],
+
+  // Horarios disponibles (mockup · editar libremente)
+  horarios: ['09:00', '10:30', '12:00', '14:00', '15:30', '17:00', '18:30'],
+
+  // Días no laborables (0 = domingo, 6 = sábado). Por ahora domingo.
+  diasNoLaborables: [0],
+
+  // Textos de la marca (por si después querés cambiarlos desde acá)
+  marca: 'bbrina.nails',
+  subMarca: 'Turnos',
+
+  // Umbrales de disponibilidad (porcentaje de horarios LIBRES)
+  // Verde ≥ alto, amarillo entre medio y alto, rojo < medio
+  umbralDisponibilidad: {
+    verde: 60,     // ≥ 60% libres → verde
+    amarillo: 30   // ≥ 30% libres → amarillo · menos → rojo
+  },
+
+  // Storage key para las reservas
+  storageKey: 'bbrina.turnos.reservas.v1'
+};
+
+/* ───────────────────────────────────────────────────────────
+   ESTADO
+   ─────────────────────────────────────────────────────────── */
+const state = {
+  servicioSeleccionado: null,
+  fechaSeleccionada: null,
+  horarioSeleccionado: null
+};
+
+/* ───────────────────────────────────────────────────────────
+   HELPERS
+   ─────────────────────────────────────────────────────────── */
+const $  = (sel) => document.querySelector(sel);
+const $$ = (sel) => document.querySelectorAll(sel);
+
+function getReservas() {
+  try {
+    return JSON.parse(localStorage.getItem(CONFIG.storageKey)) || [];
+  } catch {
+    return [];
+  }
+}
+
+function guardarReserva(reserva) {
+  const reservas = getReservas();
+  reservas.push(reserva);
+  localStorage.setItem(CONFIG.storageKey, JSON.stringify(reservas));
+}
+
+function getFechaISO(date = new Date()) {
+  // Devuelve YYYY-MM-DD en hora local
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
+
+function formatearFecha(iso) {
+  const [y, m, d] = iso.split('-').map(Number);
+  const date = new Date(y, m - 1, d);
+  return date.toLocaleDateString('es-AR', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long'
+  });
+}
+
+function horarioOcupado(fechaISO, horario) {
+  return getReservas().some(r => r.fecha === fechaISO && r.horario === horario);
+}
+
+function mostrarError(msg) {
+  const el = $('#form-error');
+  if (!el) return;
+  el.textContent = msg;
+  el.hidden = false;
+}
+
+function ocultarError() {
+  const el = $('#form-error');
+  if (!el) return;
+  el.textContent = '';
+  el.hidden = true;
+}
+
+/* ───────────────────────────────────────────────────────────
+   RENDER · SERVICIOS
+   ─────────────────────────────────────────────────────────── */
+function renderServicios() {
+  const grid = $('#servicios-grid');
+  if (!grid) return;
+
+  grid.innerHTML = '';
+
+  CONFIG.servicios.forEach(serv => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'servicio-item';
+    btn.dataset.id = serv.id;
+    btn.innerHTML = `
+      <span class="servicio-nombre">${serv.nombre}</span>
+      <span class="servicio-meta">${serv.duracion} min · ${serv.precio}</span>
+    `;
+
+    btn.addEventListener('click', () => seleccionarServicio(serv.id));
+    grid.appendChild(btn);
+  });
+}
+
+function seleccionarServicio(id) {
+  state.servicioSeleccionado = id;
+  ocultarError();
+
+  $$('.servicio-item').forEach(el => {
+    el.classList.toggle('selected', el.dataset.id === id);
+  });
+}
+
+/* ───────────────────────────────────────────────────────────
+   RENDER · HORARIOS
+   ─────────────────────────────────────────────────────────── */
+function renderHorarios() {
+  const grid = $('#horarios-grid');
+  if (!grid) return;
+
+  // Sin fecha → mensaje de ayuda
+  if (!state.fechaSeleccionada) {
+    grid.innerHTML = `<p class="hint">Elegí primero una fecha para ver los horarios disponibles.</p>`;
+    return;
+  }
+
+  // Validar día no laborable
+  const [y, m, d] = state.fechaSeleccionada.split('-').map(Number);
+  const diaSemana = new Date(y, m - 1, d).getDay();
+
+  if (CONFIG.diasNoLaborables.includes(diaSemana)) {
+    grid.innerHTML = `<p class="hint">Ese día no atendemos. Probá con otra fecha 💅</p>`;
+    state.horarioSeleccionado = null;
+    return;
+  }
+
+  grid.innerHTML = '';
+
+  CONFIG.horarios.forEach(hora => {
+    const ocupado = horarioOcupado(state.fechaSeleccionada, hora);
+
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'horario-item';
+    btn.textContent = hora;
+    btn.disabled = ocupado;
+    if (ocupado) btn.title = 'Ya reservado';
+
+    if (state.horarioSeleccionado === hora && !ocupado) {
+      btn.classList.add('selected');
+    }
+
+    btn.addEventListener('click', () => seleccionarHorario(hora));
+    grid.appendChild(btn);
+  });
+}
+
+function seleccionarHorario(hora) {
+  state.horarioSeleccionado = hora;
+  ocultarError();
+
+  $$('.horario-item').forEach(el => {
+    el.classList.toggle('selected', el.textContent === hora);
+  });
+}
+
+/* ───────────────────────────────────────────────────────────
+   CALENDARIO
+   ─────────────────────────────────────────────────────────── */
+const MESES = [
+  'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
+  'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'
+];
+const DIAS_SEMANA = ['Lu', 'Ma', 'Mi', 'Ju', 'Vi', 'Sa', 'Do'];
+
+// Mes visible actual del calendario (Date apuntando al 1° del mes)
+let mesVisible = (() => {
+  const hoy = new Date();
+  return new Date(hoy.getFullYear(), hoy.getMonth(), 1);
+})();
+
+function contarLibres(fechaISO) {
+  return CONFIG.horarios.filter(h => !horarioOcupado(fechaISO, h)).length;
+}
+
+function colorDisponibilidad(fechaISO) {
+  const total = CONFIG.horarios.length;
+  if (total === 0) return 'gris';
+  const libres = contarLibres(fechaISO);
+  const pct = (libres / total) * 100;
+
+  if (pct >= CONFIG.umbralDisponibilidad.verde) return 'verde';
+  if (pct >= CONFIG.umbralDisponibilidad.amarillo) return 'amarillo';
+  return 'rojo';
+}
+
+function esDiaNoLaborable(date) {
+  return CONFIG.diasNoLaborables.includes(date.getDay());
+}
+
+function esFechaPasada(date) {
+  const hoy = new Date();
+  hoy.setHours(0, 0, 0, 0);
+  const d = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  return d < hoy;
+}
+
+function renderCalendario() {
+  const cont = $('#calendario');
+  if (!cont) return;
+
+  const anio = mesVisible.getFullYear();
+  const mes = mesVisible.getMonth();
+
+  // Header
+  const titulo = `${MESES[mes]} ${anio}`;
+
+  // ¿Se puede ir al mes anterior? (siempre y cuando no sea antes del mes actual)
+  const hoy = new Date();
+  const mesActual = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
+  const puedeIrAtras = mesVisible > mesActual;
+
+  cont.innerHTML = `
+    <div class="calendario-header">
+      <span class="calendario-titulo">${titulo}</span>
+      <div class="calendario-nav">
+        <button type="button" class="calendario-nav-btn" id="cal-prev" ${puedeIrAtras ? '' : 'disabled'} aria-label="Mes anterior">‹</button>
+        <button type="button" class="calendario-nav-btn" id="cal-next" aria-label="Mes siguiente">›</button>
+      </div>
+    </div>
+    <div class="calendario-grid">
+      ${DIAS_SEMANA.map(d => `<span class="calendario-dia-semana">${d}</span>`).join('')}
+    </div>
+  `;
+
+  const grid = cont.querySelector('.calendario-grid');
+
+  // Día de la semana del 1° (0=domingo → queremos 0=lunes)
+  const primerDia = new Date(anio, mes, 1).getDay();
+  const offset = (primerDia + 6) % 7;
+
+  // Días del mes
+  const diasEnMes = new Date(anio, mes + 1, 0).getDate();
+
+  // Celdas vacías al inicio
+  for (let i = 0; i < offset; i++) {
+    const span = document.createElement('span');
+    span.className = 'calendario-dia vacio';
+    grid.appendChild(span);
+  }
+
+  // Días del mes
+  for (let dia = 1; dia <= diasEnMes; dia++) {
+    const fecha = new Date(anio, mes, dia);
+    const fechaISO = getFechaISO(fecha);
+
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'calendario-dia';
+    btn.dataset.fecha = fechaISO;
+
+    const noLaborable = esDiaNoLaborable(fecha);
+    const pasada = esFechaPasada(fecha);
+
+    if (noLaborable || pasada) {
+      btn.disabled = true;
+    }
+
+    if (state.fechaSeleccionada === fechaISO) {
+      btn.classList.add('selected');
+    }
+
+    // Número del día
+    const num = document.createElement('span');
+    num.textContent = dia;
+    btn.appendChild(num);
+
+    // Dot de disponibilidad
+    const dot = document.createElement('span');
+    dot.className = 'calendario-dot';
+    if (noLaborable || pasada) {
+      dot.classList.add('gris');
+    } else {
+      dot.classList.add(colorDisponibilidad(fechaISO));
+    }
+    btn.appendChild(dot);
+
+    btn.addEventListener('click', () => seleccionarFecha(fechaISO));
+    grid.appendChild(btn);
+  }
+
+  // Eventos de navegación
+  const prev = cont.querySelector('#cal-prev');
+  const next = cont.querySelector('#cal-next');
+
+  if (prev) {
+    prev.addEventListener('click', () => {
+      mesVisible = new Date(anio, mes - 1, 1);
+      renderCalendario();
+    });
+  }
+  if (next) {
+    next.addEventListener('click', () => {
+      mesVisible = new Date(anio, mes + 1, 1);
+      renderCalendario();
+    });
+  }
+}
+
+function seleccionarFecha(fechaISO) {
+  state.fechaSeleccionada = fechaISO;
+  state.horarioSeleccionado = null;
+  ocultarError();
+  renderCalendario();
+  renderHorarios();
+}
+
+function initCalendario() {
+  renderCalendario();
+}
+
+/* ───────────────────────────────────────────────────────────
+   VALIDACIÓN + SUBMIT
+   ─────────────────────────────────────────────────────────── */
+function validarFormulario(datos) {
+  if (!datos.servicio) return 'Elegí un servicio.';
+  if (!datos.fecha) return 'Elegí una fecha.';
+  if (!datos.horario) return 'Elegí un horario.';
+  if (!datos.nombre || datos.nombre.trim().length < 2) return 'Ingresá tu nombre.';
+  if (!datos.whatsapp || datos.whatsapp.replace(/\D/g, '').length < 8) return 'Ingresá un WhatsApp válido.';
+
+  const [y, m, d] = datos.fecha.split('-').map(Number);
+  const diaSemana = new Date(y, m - 1, d).getDay();
+  if (CONFIG.diasNoLaborables.includes(diaSemana)) {
+    return 'Ese día no atendemos, elegí otro.';
+  }
+
+  if (horarioOcupado(datos.fecha, datos.horario)) {
+    return 'Ese horario ya fue reservado, elegí otro.';
+  }
+
+  return null;
+}
+
+function armarMensaje(reserva) {
+  const serv = CONFIG.servicios.find(s => s.id === reserva.servicio);
+  const nombreServ = serv ? serv.nombre : reserva.servicio;
+
+  return [
+    `Hola ${CONFIG.marca} 💅`,
+    ``,
+    `Quiero reservar un turno:`,
+    `• Servicio: ${nombreServ}`,
+    `• Fecha: ${formatearFecha(reserva.fecha)}`,
+    `• Horario: ${reserva.horario} hs`,
+    `• Nombre: ${reserva.nombre}`,
+    `• WhatsApp: ${reserva.whatsapp}`,
+    reserva.nota ? `• Nota: ${reserva.nota}` : null,
+    ``,
+    `¿Me confirmás? ¡Gracias!`
+  ].filter(Boolean).join('\n');
+}
+
+function abrirWhatsApp(mensaje) {
+  const url = `https://wa.me/${CONFIG.whatsapp}?text=${encodeURIComponent(mensaje)}`;
+  window.open(url, '_blank');
+}
+
+function mostrarReservaExitosa(reserva) {
+  const card = $('#reserva-exitosa');
+  const resumen = $('#reserva-resumen');
+  const form = $('#form-turno');
+  const header = $('#reservar-header');
+
+  if (!card || !resumen || !form) return;
+
+  const serv = CONFIG.servicios.find(s => s.id === reserva.servicio);
+  const nombreServ = serv ? serv.nombre : reserva.servicio;
+
+  resumen.textContent =
+    `Servicio: ${nombreServ}\n` +
+    `Fecha: ${formatearFecha(reserva.fecha)}\n` +
+    `Horario: ${reserva.horario} hs\n` +
+    `A nombre de: ${reserva.nombre}`;
+
+  form.hidden = true;
+  if (header) header.hidden = true;
+  card.hidden = false;
+  card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+function resetFormulario() {
+  const form = $('#form-turno');
+  const card = $('#reserva-exitosa');
+  const header = $('#reservar-header');
+
+  state.servicioSeleccionado = null;
+  state.fechaSeleccionada = null;
+  state.horarioSeleccionado = null;
+
+  if (form) {
+    form.reset();
+    form.hidden = false;
+  }
+  if (header) header.hidden = false;
+  if (card) card.hidden = true;
+
+  ocultarError();
+  renderServicios();
+  renderCalendario();
+  renderHorarios();
+
+  const reservar = document.querySelector('#reservar');
+  if (reservar) reservar.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function initFormulario() {
+  const form = $('#form-turno');
+  if (!form) return;
+
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    ocultarError();
+
+    const datos = {
+      servicio: state.servicioSeleccionado,
+      fecha: state.fechaSeleccionada,
+      horario: state.horarioSeleccionado,
+      nombre: $('#input-nombre')?.value.trim() || '',
+      whatsapp: $('#input-whatsapp')?.value.trim() || '',
+      nota: $('#input-nota')?.value.trim() || ''
+    };
+
+    const error = validarFormulario(datos);
+    if (error) {
+      mostrarError(error);
+      return;
+    }
+
+    const reserva = {
+      ...datos,
+      creadaEn: new Date().toISOString()
+    };
+
+    guardarReserva(reserva);
+    abrirWhatsApp(armarMensaje(reserva));
+    mostrarReservaExitosa(reserva);
+  });
+
+  const btnNueva = $('#btn-nueva-reserva');
+  if (btnNueva) {
+    btnNueva.addEventListener('click', resetFormulario);
+  }
+}
+
+/* ───────────────────────────────────────────────────────────
+   FOOTER · año dinámico
+   ─────────────────────────────────────────────────────────── */
+function initFooter() {
+  const year = $('#year');
+  if (year) year.textContent = new Date().getFullYear();
+}
+
+/* ───────────────────────────────────────────────────────────
+   INIT
+   ─────────────────────────────────────────────────────────── */
+document.addEventListener('DOMContentLoaded', () => {
+  renderServicios();
+  initCalendario();
+  renderHorarios();
+  initFormulario();
+  initFooter();
+});
