@@ -42,16 +42,44 @@
 
   <!-- ═══════════════ HERO ═══════════════ -->
   <section class="hero">
-    <div class="container hero-inner">
-      <span class="hero-tag">Nail Studio</span>
-      <h1 class="hero-title">
-        Tus uñas, <em>tu momento</em>.
-      </h1>
-      <p class="hero-text">
-        Elegí el servicio, la fecha y el horario. Te confirmamos por WhatsApp.
-      </p>
-      <a href="#reservar" class="btn btn-primary">Reservar turno</a>
+    <div class="container hero-grid">
+
+      <!-- Columna izquierda: texto -->
+      <div class="hero-inner">
+        <span class="hero-tag">Nail Studio</span>
+
+        <span class="hero-badge">
+          <span class="hero-badge-dot" aria-hidden="true"></span>
+          Turnos disponibles esta semana
+        </span>
+
+        <h1 class="hero-title">
+          Tus uñas, <em>tu momento</em>.
+        </h1>
+
+        <p class="hero-text">
+          Elegí el servicio, la fecha y el horario. Te confirmamos por WhatsApp.
+        </p>
+
+        <div class="hero-ctas">
+          <a href="#reservar" class="btn btn-primary">Reservar turno</a>
+          <!-- EDITAR: reemplazar href por el Instagram real -->
+          <a href="#" class="btn btn-secondary hero-cta-secondary" target="_blank" rel="noopener">
+            Ver trabajos en Instagram →
+          </a>
+        </div>
+      </div>
+
+      <!-- Columna derecha: imagen -->
+      <div class="hero-media">
+        <div class="hero-media-marco">
+          <img src="assets/hero.jpg" alt="Trabajo de uñas de bbrina.nails" />
+        </div>
+      </div>
+
     </div>
+
+    <!-- Decoración de fondo (manchas blur) -->
     <div class="hero-deco" aria-hidden="true">
       <span></span><span></span><span></span>
     </div>
@@ -105,34 +133,51 @@
 
         <form id="form-turno" class="card form-turno" novalidate>
 
+          <!-- Barra de progreso -->
+          <ol class="wizard-progress" id="wizard-progress">
+            <li class="wizard-step active" data-step="1">
+              <span class="wizard-step-num">1</span>
+              <span class="wizard-step-label">Servicio</span>
+            </li>
+            <li class="wizard-step" data-step="2">
+              <span class="wizard-step-num">2</span>
+              <span class="wizard-step-label">Fecha y hora</span>
+            </li>
+            <li class="wizard-step" data-step="3">
+              <span class="wizard-step-num">3</span>
+              <span class="wizard-step-label">Tus datos</span>
+            </li>
+          </ol>
+
           <!-- Paso 1: Servicio -->
-          <fieldset class="field-group">
-            <legend class="field-legend">1. Elegí el servicio</legend>
+          <div class="wizard-paso" data-paso="1">
+            <h3 class="wizard-paso-titulo">Elegí el servicio</h3>
+            <p class="wizard-paso-texto">Seleccioná qué te querés hacer.</p>
             <div id="servicios-grid" class="servicios-grid">
               <!-- Render dinámico desde script.js -->
             </div>
-          </fieldset>
+          </div>
 
-          <!-- Paso 2: Fecha -->
-          <fieldset class="field-group">
-            <legend class="field-legend">2. Elegí la fecha</legend>
+          <!-- Paso 2: Fecha y horario -->
+          <div class="wizard-paso" data-paso="2" hidden>
+            <h3 class="wizard-paso-titulo">Elegí fecha y horario</h3>
+            <p class="wizard-paso-texto">Elegí el día y después el horario disponible.</p>
+
             <div id="calendario" class="calendario">
               <!-- Render dinámico desde script.js -->
             </div>
-          </fieldset>
 
-          <!-- Paso 3: Horario -->
-          <fieldset class="field-group">
-            <legend class="field-legend">3. Elegí el horario</legend>
             <div id="horarios-grid" class="horarios-grid">
               <!-- Render dinámico desde script.js -->
               <p class="hint">Elegí primero una fecha para ver los horarios disponibles.</p>
             </div>
-          </fieldset>
+          </div>
 
-          <!-- Paso 4: Datos -->
-          <fieldset class="field-group">
-            <legend class="field-legend">4. Tus datos</legend>
+          <!-- Paso 3: Datos -->
+          <div class="wizard-paso" data-paso="3" hidden>
+            <h3 class="wizard-paso-titulo">Tus datos</h3>
+            <p class="wizard-paso-texto">Así sabemos a nombre de quién reservamos.</p>
+
             <div class="field-row">
               <div class="field">
                 <label for="input-nombre">Nombre y apellido</label>
@@ -147,15 +192,21 @@
               <label for="input-nota">Nota (opcional)</label>
               <textarea id="input-nota" name="nota" rows="3" placeholder="Ej: Vengo con diseño personalizado, referencia por IG, etc."></textarea>
             </div>
-          </fieldset>
+          </div>
 
           <!-- Error global -->
           <p id="form-error" class="form-error" role="alert" hidden></p>
 
-          <!-- Submit -->
-          <button type="submit" class="btn btn-primary btn-block">
-            Reservar por WhatsApp
-          </button>
+          <!-- Navegación entre pasos -->
+          <div class="wizard-nav">
+            <button type="button" id="btn-wizard-prev" class="btn btn-secondary" hidden>
+              Volver
+            </button>
+            <button type="button" id="btn-wizard-next" class="btn btn-primary">
+              Continuar
+            </button>
+          </div>
+
           <p class="form-disclaimer">
             Al confirmar, tu turno quedará reservado.
           </p>
@@ -177,26 +228,39 @@
           </div>
         </div>
 
-        <!-- Resumen post-reserva (oculto por defecto) -->
-        <div id="reserva-exitosa" class="card reserva-exitosa" hidden>
-          <span class="check-icon" aria-hidden="true">✓</span>
-          <h3>¡Turno confirmado!</h3>
-          <p id="reserva-resumen" class="reserva-resumen"></p>
-          <div class="reserva-codigo">
-            <span class="reserva-codigo-label">Tu código de reserva</span>
+  <!-- ═══════════════ MODAL TURNO CONFIRMADO ═══════════════ -->
+    <div id="reserva-exitosa" class="modal" hidden>
+      <div class="modal-backdrop"></div>
+      <div class="modal-card card reserva-exitosa-modal">
+        <span class="check-icon" aria-hidden="true">✓</span>
+
+        <h3 class="reserva-exito-titulo">¡Turno reservado con éxito!</h3>
+        <p class="reserva-exito-subtitulo">Guardá tu código para consultar o cancelar tu turno.</p>
+
+        <p id="reserva-resumen" class="reserva-resumen"></p>
+
+        <div class="reserva-codigo">
+          <span class="reserva-codigo-label">Tu código de reserva</span>
+          <button type="button" id="btn-copiar-codigo" class="reserva-codigo-btn" title="Copiar código">
             <strong id="reserva-codigo-valor" class="reserva-codigo-valor">—</strong>
-            <span class="reserva-codigo-hint">Guardalo para consultar o cancelar tu turno.</span>
-          </div>
-          <div class="reserva-acciones">
-            <button type="button" id="btn-editar-reserva" class="btn btn-secondary">
-              Editar turno
-            </button>
-            <button type="button" id="btn-confirmar-final" class="btn btn-primary">
-              Confirmar
-            </button>
-          </div>
+            <svg class="reserva-codigo-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+            </svg>
+          </button>
+          <span class="reserva-codigo-hint" id="reserva-codigo-hint">Click para copiar</span>
+        </div>
+
+        <div class="reserva-acciones">
+          <button type="button" id="btn-editar-reserva" class="btn btn-secondary">
+            Editar turno
+          </button>
+          <button type="button" id="btn-confirmar-final" class="btn btn-primary">
+            Listo
+          </button>
         </div>
       </div>
+    </div>
     </section>
 
     <!-- ═══════════════ INFO ═══════════════ -->

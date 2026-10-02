@@ -28,7 +28,8 @@ const CONFIG = {
    ESTADO
    ─────────────────────────────────────────────────────────── */
 const state = {
-  filtro: 'todas',
+  filtro: 'todas',        // filtro de fecha: todas / proximas / pasadas / semana / mes
+  filtroServicio: 'todos', // 'todos' o el id de un servicio
   reservaEditando: null,
   reservaMoviendo: null,
   reservaCancelando: null
@@ -122,6 +123,25 @@ function initLogout() {
 /* ───────────────────────────────────────────────────────────
    FILTROS
    ─────────────────────────────────────────────────────────── */
+function initFiltroServicio() {
+  const select = $('#filtro-servicio');
+  if (!select) return;
+
+  // Poblar con los servicios
+  CONFIG.servicios.forEach(serv => {
+    const opt = document.createElement('option');
+    opt.value = serv.id;
+    opt.textContent = serv.nombre;
+    select.appendChild(opt);
+  });
+
+  // Listener de cambio
+  select.addEventListener('change', () => {
+    state.filtroServicio = select.value;
+    renderTodo();
+  });
+}
+
 function initFiltros() {
   $$('.admin-filtro').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -134,9 +154,59 @@ function initFiltros() {
 
 function filtrarReservas(reservas) {
   const hoyISO = getFechaISO();
-  if (state.filtro === 'proximas') return reservas.filter(r => r.fecha >= hoyISO);
-  if (state.filtro === 'pasadas')  return reservas.filter(r => r.fecha < hoyISO);
-  return reservas;
+  let filtradas = reservas;
+
+  // ── Filtro por fecha ──
+  if (state.filtro === 'proximas') {
+    filtradas = filtradas.filter(r => r.fecha >= hoyISO);
+  } else if (state.filtro === 'pasadas') {
+    filtradas = filtradas.filter(r => r.fecha < hoyISO);
+  } else if (state.filtro === 'semana') {
+    const { inicio, fin } = getRangoSemanaActual();
+    filtradas = filtradas.filter(r => r.fecha >= inicio && r.fecha <= fin);
+  } else if (state.filtro === 'mes') {
+    const { inicio, fin } = getRangoMesActual();
+    filtradas = filtradas.filter(r => r.fecha >= inicio && r.fecha <= fin);
+  }
+
+  // ── Filtro por servicio ──
+  if (state.filtroServicio && state.filtroServicio !== 'todos') {
+    filtradas = filtradas.filter(r => r.servicio === state.filtroServicio);
+  }
+
+  return filtradas;
+}
+
+/* Devuelve el lunes y domingo de la semana actual (ISO YYYY-MM-DD) */
+function getRangoSemanaActual() {
+  const hoy = new Date();
+  hoy.setHours(0, 0, 0, 0);
+  const diaSemana = hoy.getDay(); // 0=Dom, 1=Lun, ... 6=Sáb
+
+  // Queremos lunes como inicio
+  const offsetLunes = (diaSemana === 0 ? -6 : 1 - diaSemana);
+
+  const lunes = new Date(hoy);
+  lunes.setDate(hoy.getDate() + offsetLunes);
+
+  const domingo = new Date(lunes);
+  domingo.setDate(lunes.getDate() + 6);
+
+  return {
+    inicio: getFechaISO(lunes),
+    fin: getFechaISO(domingo)
+  };
+}
+
+/* Devuelve el primer y último día del mes actual */
+function getRangoMesActual() {
+  const hoy = new Date();
+  const primerDia = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
+  const ultimoDia = new Date(hoy.getFullYear(), hoy.getMonth() + 1, 0);
+  return {
+    inicio: getFechaISO(primerDia),
+    fin: getFechaISO(ultimoDia)
+  };
 }
 
 /* ───────────────────────────────────────────────────────────
@@ -454,6 +524,87 @@ function confirmarCancelar() {
 }
 
 /* ───────────────────────────────────────────────────────────
+   EXPORTAR CSV
+   ─────────────────────────────────────────────────────────── */
+function escaparCSV(valor) {
+  const s = String(valor ?? '');
+  // Si contiene ; " \n → lo envolvemos entre comillas y duplicamos comillas internas
+  if (/[;"\n\r]/.test(s)) {
+    return `"${s.replace(/"/g, '""')}"`;
+  }
+  return s;
+}
+
+function exportarCSV() {
+  const reservas = filtrarReservas(getReservas());
+
+  if (!reservas.length) {
+    window.alert('No hay reservas para exportar con los filtros actuales.');
+    return;
+  }
+
+  // Orden ascendente por fecha + horario
+  reservas.sort((a, b) => {
+    if (a.fecha !== b.fecha) return a.fecha < b.fecha ? -1 : 1;
+    return (a.horario || '').localeCompare(b.horario || '');
+  });
+
+  const encabezados = [
+    'Código',
+    'Servicio',
+    'Fecha',
+    'Horario',
+    'Nombre',
+    'WhatsApp',
+    'Nota',
+    'Creada'
+  ];
+
+  const filas = reservas.map(r => {
+    const serv = CONFIG.servicios.find(s => s.id === r.servicio);
+    const nombreServ = serv ? serv.nombre : (r.servicio || '');
+    const creada = r.creadaEn
+      ? new Date(r.creadaEn).toLocaleString('es-AR', {
+          day: '2-digit', month: '2-digit', year: 'numeric',
+          hour: '2-digit', minute: '2-digit'
+        })
+      : '';
+
+    return [
+      r.codigo || '',
+      nombreServ,
+      r.fecha || '',
+      r.horario || '',
+      r.nombre || '',
+      r.whatsapp || '',
+      r.nota || '',
+      creada
+    ].map(escaparCSV).join(';');
+  });
+
+  // BOM UTF-8 para que Excel reconozca acentos
+  const contenido = '\uFEFF' + encabezados.join(';') + '\n' + filas.join('\n');
+
+  // Nombre del archivo: bbrina-turnos-YYYY-MM-DD.csv
+  const hoy = getFechaISO();
+  const nombreArchivo = `bbrina-turnos-${hoy}.csv`;
+
+  // Crear blob y disparar la descarga
+  const blob = new Blob([contenido], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = nombreArchivo;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+
+  // Liberar memoria
+  setTimeout(() => URL.revokeObjectURL(url), 100);
+}
+
+/* ───────────────────────────────────────────────────────────
    INIT
    ─────────────────────────────────────────────────────────── */
 function initBotones() {
@@ -465,6 +616,9 @@ function initBotones() {
 
   const confirmarCancelarBtn = $('#btn-confirmar-cancelar');
   if (confirmarCancelarBtn) confirmarCancelarBtn.addEventListener('click', confirmarCancelar);
+
+  const exportarBtn = $('#btn-exportar-csv');
+  if (exportarBtn) exportarBtn.addEventListener('click', exportarCSV);
 }
 
 function initYear() {
@@ -481,6 +635,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   initLogout();
   initFiltros();
+  initFiltroServicio();
   initModales();
   initBotones();
   initYear();

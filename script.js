@@ -461,6 +461,10 @@ function mostrarRevision(reserva) {
   if (card) card.hidden = true;
 
   rev.hidden = false;
+  // Disparar animación (sacamos y ponemos la clase para reiniciarla cada vez)
+  rev.classList.remove('anim-fade-up');
+  void rev.offsetWidth; // force reflow
+  rev.classList.add('anim-fade-up');
   rev.scrollIntoView({ behavior: 'smooth', block: 'center' });
 }
 
@@ -489,6 +493,9 @@ function mostrarReservaExitosa(reserva) {
   if (header) header.hidden = true;
   if (rev) rev.hidden = true;
   card.hidden = false;
+  card.classList.remove('anim-fade-up');
+  void card.offsetWidth;
+  card.classList.add('anim-fade-up');
   card.scrollIntoView({ behavior: 'smooth', block: 'center' });
 }
 
@@ -567,6 +574,24 @@ function resetFormulario() {
   renderCalendario();
   renderHorarios();
 
+  // Volver al paso 1
+  const wizardPasos = document.querySelectorAll('.wizard-paso');
+  wizardPasos.forEach(el => { el.hidden = el.dataset.paso !== '1'; });
+
+  const wizardSteps = document.querySelectorAll('.wizard-step');
+  wizardSteps.forEach(el => {
+    el.classList.toggle('active', el.dataset.step === '1');
+    el.classList.remove('completed');
+  });
+
+  const btnPrev = document.querySelector('#btn-wizard-prev');
+  const btnNext = document.querySelector('#btn-wizard-next');
+  if (btnPrev) btnPrev.hidden = true;
+  if (btnNext) {
+    btnNext.textContent = 'Continuar';
+    btnNext.disabled = true;
+  }
+
   const reservar = document.querySelector('#reservar');
   if (reservar) reservar.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
@@ -575,90 +600,176 @@ function initFormulario() {
   const form = $('#form-turno');
   if (!form) return;
 
+  // ── Wizard: estado del paso actual ──
+  let pasoActual = 1;
+  const TOTAL_PASOS = 3;
+
   // Guardamos los datos armados en el paso de revisión,
   // para no tener que releer el DOM cuando confirma.
   let reservaPendiente = null;
 
-  form.addEventListener('submit', (e) => {
-    e.preventDefault();
+  function irAPaso(n) {
+    pasoActual = Math.max(1, Math.min(TOTAL_PASOS, n));
     ocultarError();
 
-    const datos = {
-      servicio: state.servicioSeleccionado,
-      fecha: state.fechaSeleccionada,
-      horario: state.horarioSeleccionado,
-      nombre: $('#input-nombre')?.value.trim() || '',
-      whatsapp: $('#input-whatsapp')?.value.trim() || '',
-      nota: $('#input-nota')?.value.trim() || ''
-    };
+    // Mostrar solo el paso actual
+    $$('.wizard-paso').forEach(el => {
+      const num = Number(el.dataset.paso);
+      el.hidden = num !== pasoActual;
+    });
 
-    const error = validarFormulario(datos);
-    if (error) {
-      mostrarError(error);
-      return;
+    // Actualizar barra de progreso
+    $$('.wizard-step').forEach(el => {
+      const num = Number(el.dataset.step);
+      el.classList.toggle('active', num === pasoActual);
+      el.classList.toggle('completed', num < pasoActual);
+    });
+
+    // Botones
+    const btnPrev = $('#btn-wizard-prev');
+    const btnNext = $('#btn-wizard-next');
+    if (btnPrev) btnPrev.hidden = pasoActual === 1;
+    if (btnNext) btnNext.textContent = pasoActual === TOTAL_PASOS ? 'Revisar turno' : 'Continuar';
+
+    // Refrescar estado del botón "Continuar"
+    actualizarBotonContinuar();
+
+    // Scroll suave al inicio del form
+    const reservar = document.querySelector('#reservar');
+    if (reservar) reservar.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  function pasoEstaCompleto(n) {
+    if (n === 1) return !!state.servicioSeleccionado;
+    if (n === 2) return !!state.fechaSeleccionada && !!state.horarioSeleccionado;
+    if (n === 3) {
+      const nombre = $('#input-nombre')?.value.trim() || '';
+      const whatsapp = $('#input-whatsapp')?.value.trim() || '';
+      return nombre.length >= 2 && whatsapp.replace(/\D/g, '').length >= 8;
     }
+    return false;
+  }
 
-    // Si venimos de "Editar turno", reusamos el código original.
-    // Si no, generamos uno nuevo.
-    const codigo = state.codigoEnEdicion || generarCodigoReserva();
-    state.codigoEnEdicion = null; // se consume una sola vez
+  function actualizarBotonContinuar() {
+    const btnNext = $('#btn-wizard-next');
+    if (!btnNext) return;
+    btnNext.disabled = !pasoEstaCompleto(pasoActual);
+  }
 
-    reservaPendiente = {
-      ...datos,
-      codigo,
-      creadaEn: new Date().toISOString()
-    };
-
-    mostrarRevision(reservaPendiente);
+  // Escuchar cambios que afectan la validez del paso actual
+  document.addEventListener('click', (e) => {
+    if (e.target.closest('.servicio-item') ||
+        e.target.closest('.horario-item') ||
+        e.target.closest('.calendario-dia')) {
+      actualizarBotonContinuar();
+    }
   });
 
-  // Botón "Volver" → vuelve al form sin perder lo cargado
-  const btnVolver = $('#btn-volver-revision');
-  if (btnVolver) {
-    btnVolver.addEventListener('click', () => {
-      const rev = $('#revision-turno');
-      if (rev) rev.hidden = true;
-      form.hidden = false;
-      const header = $('#reservar-header');
-      if (header) header.hidden = false;
-      const reservar = document.querySelector('#reservar');
-      if (reservar) reservar.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  ['input-nombre', 'input-whatsapp'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('input', actualizarBotonContinuar);
+  });
+
+  // Botón "Continuar" / "Revisar turno"
+  const btnNext = $('#btn-wizard-next');
+  if (btnNext) {
+    btnNext.addEventListener('click', () => {
+      if (!pasoEstaCompleto(pasoActual)) return;
+
+      if (pasoActual < TOTAL_PASOS) {
+        irAPaso(pasoActual + 1);
+        return;
+      }
+
+      // Estamos en el último paso → armar reserva y mostrar revisión
+      const datos = {
+        servicio: state.servicioSeleccionado,
+        fecha: state.fechaSeleccionada,
+        horario: state.horarioSeleccionado,
+        nombre: $('#input-nombre')?.value.trim() || '',
+        whatsapp: $('#input-whatsapp')?.value.trim() || '',
+        nota: $('#input-nota')?.value.trim() || ''
+      };
+
+      const error = validarFormulario(datos);
+      if (error) {
+        mostrarError(error);
+        return;
+      }
+
+      const codigo = state.codigoEnEdicion || generarCodigoReserva();
+      state.codigoEnEdicion = null;
+
+      reservaPendiente = {
+        ...datos,
+        codigo,
+        creadaEn: new Date().toISOString()
+      };
+
+      mostrarRevision(reservaPendiente);
     });
   }
 
-  // Botón "Confirmar" → guarda la reserva y muestra éxito
-  // ⚠️ WhatsApp desactivado temporalmente. Para reactivar, descomentá la línea de abrirWhatsApp.
+  // Botón "Volver"
+  const btnPrev = $('#btn-wizard-prev');
+  if (btnPrev) {
+    btnPrev.addEventListener('click', () => {
+      if (pasoActual > 1) irAPaso(pasoActual - 1);
+    });
+  }
+
+  // Botón "Volver" del paso de revisión → vuelve al último paso del wizard
+  const btnVolverRevision = $('#btn-volver-revision');
+  if (btnVolverRevision) {
+    btnVolverRevision.addEventListener('click', () => {
+      const rev = $('#revision-turno');
+      if (rev) rev.hidden = true;
+      const header = $('#reservar-header');
+      if (header) header.hidden = false;
+      form.hidden = false;
+      irAPaso(TOTAL_PASOS);
+    });
+  }
+
+  // Botón "Confirmar turno" del paso de revisión
   const btnConfirmar = $('#btn-confirmar-whatsapp');
   if (btnConfirmar) {
     btnConfirmar.addEventListener('click', () => {
       if (!reservaPendiente) return;
 
-      guardarReserva(reservaPendiente);
+      activarSpinner(btnConfirmar);
 
-      // 🔕 DESACTIVADO: enviar a WhatsApp
-      // abrirWhatsApp(armarMensaje(reservaPendiente));
+      setTimeout(() => {
+        guardarReserva(reservaPendiente);
 
-      // Por si querés ver el mensaje que se enviaría, lo dejamos en consola
-      console.log('[Reserva] Mensaje que se enviaría por WhatsApp:\n' + armarMensaje(reservaPendiente));
+        // 🔕 DESACTIVADO: enviar a WhatsApp
+        // abrirWhatsApp(armarMensaje(reservaPendiente));
 
-      mostrarReservaExitosa(reservaPendiente);
+        console.log('[Reserva] Mensaje que se enviaría por WhatsApp:\n' + armarMensaje(reservaPendiente));
 
-      // Guardamos la reserva confirmada para poder editarla desde el cartel
-      ultimaReservaConfirmada = reservaPendiente;
+        mostrarReservaExitosa(reservaPendiente);
 
-      reservaPendiente = null;
+        ultimaReservaConfirmada = reservaPendiente;
+        reservaPendiente = null;
+        desactivarSpinner(btnConfirmar);
+      }, 400);
     });
   }
 
+  // Botón "Confirmar" final del cartel de éxito
   const btnConfirmarFinal = $('#btn-confirmar-final');
   if (btnConfirmarFinal) {
     btnConfirmarFinal.addEventListener('click', resetFormulario);
   }
 
+  // Botón "Editar turno" del cartel de éxito
   const btnEditar = $('#btn-editar-reserva');
   if (btnEditar) {
     btnEditar.addEventListener('click', editarReserva);
   }
+
+  // Arrancamos en el paso 1
+  irAPaso(1);
 }
 
 /* ───────────────────────────────────────────────────────────
@@ -696,7 +807,7 @@ function renderConsulta(reservas) {
 
   if (!reservas.length) {
     const p = document.createElement('p');
-    p.className = 'consultar-vacio';
+    p.className = 'consultar-vacio anim-fade-up';
     p.textContent = 'No encontramos una reserva con esos datos. Verificá el WhatsApp y el código.';
     cont.appendChild(p);
     cont.hidden = false;
@@ -747,10 +858,14 @@ function renderConsulta(reservas) {
       card.appendChild(acciones);
     }
 
+    card.classList.add('anim-fade-up');
     cont.appendChild(card);
   });
 
   cont.hidden = false;
+  cont.classList.remove('anim-fade');
+  void cont.offsetWidth;
+  cont.classList.add('anim-fade');
   cont.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
 
@@ -785,6 +900,21 @@ function cancelarReserva(codigo) {
   if (typeof renderHorarios === 'function') renderHorarios();
 }
 
+/* ───────────────────────────────────────────────────────────
+   UI · spinner en botones
+   ─────────────────────────────────────────────────────────── */
+function activarSpinner(btn) {
+  if (!btn) return;
+  btn.classList.add('is-loading');
+  btn.disabled = true;
+}
+
+function desactivarSpinner(btn) {
+  if (!btn) return;
+  btn.classList.remove('is-loading');
+  btn.disabled = false;
+}
+
 function initConsultar() {
   const form = $('#form-consultar');
   if (!form) return;
@@ -815,20 +945,86 @@ function initConsultar() {
       return;
     }
 
-    const encontradas = buscarReservas(whatsapp, codigo);
-    renderConsulta(encontradas);
+    // Simulamos un mini delay + spinner para que se sienta "trabajando"
+    const btn = form.querySelector('button[type="submit"]');
+    activarSpinner(btn);
+
+    setTimeout(() => {
+      const encontradas = buscarReservas(whatsapp, codigo);
+      renderConsulta(encontradas);
+      desactivarSpinner(btn);
+    }, 400);
   });
 }
-
 
 /* ───────────────────────────────────────────────────────────
    INIT
    ─────────────────────────────────────────────────────────── */
+
+/* ───────────────────────────────────────────────────────────
+   COPIAR CÓDIGO AL PORTAPAPELES
+   ─────────────────────────────────────────────────────────── */
+function copiarAlPortapapeles(texto) {
+  // Método moderno
+  if (navigator.clipboard && window.isSecureContext) {
+    return navigator.clipboard.writeText(texto);
+  }
+  // Fallback: textarea temporal
+  return new Promise((resolve, reject) => {
+    try {
+      const ta = document.createElement('textarea');
+      ta.value = texto;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      resolve();
+    } catch (e) {
+      reject(e);
+    }
+  });
+}
+
+function initCopiarCodigo() {
+  const btn = document.getElementById('btn-copiar-codigo');
+  const hint = document.getElementById('reserva-codigo-hint');
+  if (!btn) return;
+
+  const hintOriginal = hint ? hint.textContent : '';
+
+  btn.addEventListener('click', async () => {
+    const codigoEl = document.getElementById('reserva-codigo-valor');
+    const codigo = codigoEl ? codigoEl.textContent.trim() : '';
+    if (!codigo || codigo === '—') return;
+
+    try {
+      await copiarAlPortapapeles(codigo);
+
+      btn.classList.add('copiado');
+      if (hint) hint.textContent = '¡Copiado!';
+
+      setTimeout(() => {
+        btn.classList.remove('copiado');
+        if (hint) hint.textContent = hintOriginal;
+      }, 2000);
+    } catch (err) {
+      console.warn('[Copiar] No se pudo copiar:', err);
+      if (hint) hint.textContent = 'No se pudo copiar. Anotalo manualmente.';
+      setTimeout(() => {
+        if (hint) hint.textContent = hintOriginal;
+      }, 2500);
+    }
+  });
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   renderServicios();
   initCalendario();
   renderHorarios();
   initFormulario();
   initConsultar();
+  initCopiarCodigo();
   initFooter();
 });

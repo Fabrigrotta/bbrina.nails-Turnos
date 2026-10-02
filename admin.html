@@ -51,7 +51,12 @@
       <section class="admin-bloque">
         <header class="admin-bloque-header">
           <h3 class="admin-bloque-titulo">Últimos turnos reservados</h3>
-          <span class="admin-bloque-contador" id="admin-contador-recientes">— reservas</span>
+          <div class="admin-bloque-acciones">
+            <span class="admin-bloque-contador" id="admin-contador-recientes">— reservas</span>
+            <button type="button" id="btn-exportar-csv" class="btn btn-secondary admin-btn-sm">
+              Exportar CSV
+            </button>
+          </div>
         </header>
 
         <div id="admin-lista-recientes" class="admin-lista">
@@ -68,10 +73,20 @@
           <span class="admin-bloque-contador" id="admin-contador">— reservas</span>
         </header>
 
-        <div class="admin-filtros">
+        <div class="admin-filtros admin-filtros-fecha">
           <button type="button" class="admin-filtro active" data-filtro="todas">Todas</button>
           <button type="button" class="admin-filtro" data-filtro="proximas">Próximas</button>
           <button type="button" class="admin-filtro" data-filtro="pasadas">Pasadas</button>
+          <button type="button" class="admin-filtro" data-filtro="semana">Esta semana</button>
+          <button type="button" class="admin-filtro" data-filtro="mes">Este mes</button>
+        </div>
+
+        <div class="admin-filtros admin-filtros-servicio">
+          <label for="filtro-servicio" class="admin-filtros-label">Servicio:</label>
+          <select id="filtro-servicio" class="admin-select">
+            <option value="todos">Todos los servicios</option>
+            <!-- Se puebla desde admin.js -->
+          </select>
         </div>
 
         <div id="admin-lista" class="admin-lista">

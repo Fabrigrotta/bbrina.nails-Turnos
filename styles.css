@@ -132,11 +132,18 @@ button { font-family: inherit; }
   overflow: hidden;
 }
 
-.hero-inner {
-  text-align: center;
-  max-width: 720px;
+.hero-grid {
+  display: grid;
+  grid-template-columns: 1.1fr 1fr;
+  gap: 60px;
+  align-items: center;
   position: relative;
   z-index: 2;
+}
+
+.hero-inner {
+  text-align: left;
+  max-width: 560px;
 }
 
 .hero-tag {
@@ -146,16 +153,41 @@ button { font-family: inherit; }
   text-transform: uppercase;
   color: var(--dorado);
   font-weight: 500;
-  margin-bottom: 20px;
+  margin-bottom: 14px;
+}
+
+/* Badge "Turnos disponibles esta semana" */
+.hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: var(--rosa-700);
+  background: var(--rosa-50);
+  border: 1px solid var(--rosa-100);
+  border-radius: var(--radius-full);
+  padding: 6px 14px;
+  margin-bottom: 22px;
+  white-space: nowrap;
+}
+
+.hero-badge-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #4caf82;
+  box-shadow: 0 0 0 3px rgba(76, 175, 130, 0.2);
+  flex-shrink: 0;
 }
 
 .hero-title {
   font-family: var(--fuente-titulo);
-  font-size: clamp(2.2rem, 5vw, 3.6rem);
+  font-size: clamp(2.4rem, 5vw, 3.8rem);
   font-weight: 600;
   color: var(--rosa-700);
   margin: 0 0 20px;
-  line-height: 1.15;
+  line-height: 1.1;
 }
 
 .hero-title em {
@@ -167,8 +199,60 @@ button { font-family: inherit; }
   font-size: 1.05rem;
   color: var(--texto-soft);
   margin: 0 0 32px;
+  line-height: 1.6;
+  max-width: 480px;
 }
 
+.hero-ctas {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.hero-cta-secondary {
+  padding: 14px 24px;
+  font-size: 0.9rem;
+}
+
+/* Imagen del hero */
+.hero-media {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+}
+
+.hero-media-marco {
+  position: relative;
+  width: 100%;
+  max-width: 420px;
+  aspect-ratio: 1 / 1;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: var(--sombra-lg);
+  border: 6px solid var(--blanco);
+  background: linear-gradient(135deg, var(--rosa-100), var(--rosa-200));
+  z-index: 1;
+}
+
+.hero-media-marco::before {
+  content: '';
+  position: absolute;
+  inset: -30px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(238, 180, 196, 0.5) 0%, transparent 60%);
+  z-index: -1;
+  pointer-events: none;
+}
+
+.hero-media-marco img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Decoración de fondo */
 .hero-deco {
   position: absolute;
   inset: 0;
@@ -198,6 +282,54 @@ button { font-family: inherit; }
   background: var(--rosa-300);
   top: 30%; right: -40px;
   opacity: 0.4;
+}
+
+/* Responsive: mobile → una columna, texto centrado */
+@media (max-width: 860px) {
+  .hero {
+    padding: 60px 0 40px;
+  }
+
+  .hero-grid {
+    grid-template-columns: 1fr;
+    gap: 40px;
+    text-align: center;
+  }
+
+  .hero-inner {
+    max-width: 100%;
+    text-align: center;
+    margin: 0 auto;
+  }
+
+  .hero-text {
+    max-width: 100%;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .hero-ctas {
+    justify-content: center;
+  }
+
+  .hero-media-marco {
+    max-width: 320px;
+  }
+}
+
+@media (max-width: 480px) {
+  .hero-ctas {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .hero-ctas .btn {
+    width: 100%;
+  }
+
+  .hero-media-marco {
+    max-width: 260px;
+  }
 }
 
 /* ── Sections ── */
@@ -781,6 +913,49 @@ button { font-family: inherit; }
   letter-spacing: 0.08em;
 }
 
+/* Botón clickeable que envuelve el código + ícono de copiar */
+.reserva-codigo-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  background: transparent;
+  border: none;
+  padding: 6px 14px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.2s ease;
+}
+
+.reserva-codigo-btn:hover {
+  background: var(--rosa-100);
+}
+
+.reserva-codigo-btn .reserva-codigo-icon {
+  color: var(--texto-soft);
+  opacity: 0.7;
+  transition: opacity 0.2s ease, color 0.2s ease;
+}
+
+.reserva-codigo-btn:hover .reserva-codigo-icon {
+  opacity: 1;
+  color: var(--rosa-700);
+}
+
+/* Feedback visual cuando se copia */
+.reserva-codigo-btn.copiado {
+  background: rgba(76, 175, 130, 0.12);
+}
+
+.reserva-codigo-btn.copiado .reserva-codigo-valor {
+  color: #2f8d5f;
+}
+
+.reserva-codigo-btn.copiado .reserva-codigo-icon {
+  opacity: 1;
+  color: #2f8d5f;
+}
+
 .reserva-codigo-hint {
   font-size: 0.78rem;
   color: var(--texto-soft);
@@ -1305,6 +1480,15 @@ button { font-family: inherit; }
   .modal-acciones .btn { width: 100%; }
 }
 
+/* Animar modales automáticamente cuando se muestran */
+.modal:not([hidden]) .modal-backdrop {
+  animation: fadeIn 0.22s ease-out both;
+}
+
+.modal:not([hidden]) .modal-card {
+  animation: modalPop 0.26s ease-out both;
+}
+
 /* ── Ícono de cuenta en el header ── */
 .nav-cuenta {
   display: inline-flex;
@@ -1404,4 +1588,373 @@ button { font-family: inherit; }
   font-size: 0.85rem;
   color: var(--texto-soft);
   font-weight: 500;
+}
+
+.admin-bloque-acciones {
+  display: inline-flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+/* Fila de filtros con más espacio */
+.admin-filtros-fecha {
+  margin-bottom: 12px;
+}
+
+.admin-filtros-servicio {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 24px;
+  padding-bottom: 20px;
+  border-bottom: 1px dashed var(--rosa-100);
+}
+
+.admin-filtros-label {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--texto-soft);
+}
+
+.admin-select {
+  font-family: inherit;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--texto);
+  background: var(--blanco);
+  border: 1.5px solid var(--rosa-100);
+  border-radius: var(--radius-full);
+  padding: 8px 36px 8px 16px;
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%237a5f68' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 14px;
+  transition: border-color 0.2s ease;
+}
+
+.admin-select:hover {
+  border-color: var(--rosa-300);
+}
+
+.admin-select:focus {
+  outline: none;
+  border-color: var(--rosa-400);
+}
+
+@media (max-width: 640px) {
+  .admin-filtros-servicio {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .admin-select {
+    width: 100%;
+    max-width: 280px;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   ANIMACIONES
+   ═══════════════════════════════════════════════════════════ */
+
+@keyframes fadeSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes modalPop {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Clase que dispara fade + slide up */
+.anim-fade-up {
+  animation: fadeSlideUp 0.32s ease-out both;
+}
+
+/* Clase que dispara fade simple */
+.anim-fade {
+  animation: fadeIn 0.28s ease-out both;
+}
+
+/* Respetar "prefers-reduced-motion" → si el usuario no quiere animaciones, no las mostramos */
+@media (prefers-reduced-motion: reduce) {
+  .anim-fade-up,
+  .anim-fade,
+  .modal-card {
+    animation: none !important;
+  }
+}
+
+/* ── Spinner para botones en estado de carga ── */
+.btn.is-loading {
+  pointer-events: none;
+  position: relative;
+  color: transparent !important;
+}
+
+.btn.is-loading::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 18px;
+  height: 18px;
+  margin: -9px 0 0 -9px;
+  border: 2.5px solid rgba(255, 255, 255, 0.35);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: btnSpin 0.7s linear infinite;
+}
+
+/* Para botones secundarios (fondo blanco) el spinner va en rosa */
+.btn-secondary.is-loading::after {
+  border-color: rgba(125, 60, 80, 0.25);
+  border-top-color: var(--rosa-700);
+}
+
+@keyframes btnSpin {
+  to { transform: rotate(360deg); }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   WIZARD · Reserva paso a paso
+   ═══════════════════════════════════════════════════════════ */
+
+/* Barra de progreso */
+.wizard-progress {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  list-style: none;
+  padding: 0;
+  margin: 0 0 32px;
+}
+
+.wizard-step {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  position: relative;
+  flex: 1;
+  max-width: 180px;
+}
+
+.wizard-step::after {
+  content: '';
+  flex: 1;
+  height: 1.5px;
+  background: var(--rosa-100);
+  margin: 0 12px;
+  transition: background 0.3s ease;
+}
+
+.wizard-step:last-child::after {
+  display: none;
+}
+
+.wizard-step-num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  font-family: var(--fuente-cuerpo);
+  font-size: 0.85rem;
+  font-weight: 600;
+  background: var(--rosa-50);
+  color: var(--texto-soft);
+  border: 1.5px solid var(--rosa-100);
+  transition: all 0.3s ease;
+  flex-shrink: 0;
+}
+
+.wizard-step-label {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--texto-soft);
+  white-space: nowrap;
+  transition: color 0.3s ease;
+}
+
+/* Paso activo */
+.wizard-step.active .wizard-step-num {
+  background: linear-gradient(135deg, var(--rosa-500), var(--rosa-700));
+  color: var(--blanco);
+  border-color: transparent;
+  box-shadow: var(--sombra-sm);
+}
+
+.wizard-step.active .wizard-step-label {
+  color: var(--rosa-700);
+  font-weight: 600;
+}
+
+/* Paso completado */
+.wizard-step.completed .wizard-step-num {
+  background: var(--rosa-200);
+  color: var(--rosa-700);
+  border-color: var(--rosa-300);
+}
+
+.wizard-step.completed::after {
+  background: var(--rosa-300);
+}
+
+.wizard-step.completed .wizard-step-label {
+  color: var(--rosa-700);
+}
+
+/* Pasos del wizard */
+.wizard-paso {
+  min-height: 220px;
+}
+
+.wizard-paso-titulo {
+  font-family: var(--fuente-titulo);
+  font-size: 1.35rem;
+  font-weight: 600;
+  color: var(--rosa-700);
+  margin: 0 0 6px;
+}
+
+.wizard-paso-texto {
+  color: var(--texto-soft);
+  font-size: 0.9rem;
+  margin: 0 0 20px;
+}
+
+/* Navegación inferior */
+.wizard-nav {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  margin-top: 8px;
+}
+
+.wizard-nav .btn {
+  min-width: 140px;
+}
+
+/* Animación de entrada para cada paso */
+.wizard-paso:not([hidden]) {
+  animation: fadeSlideUp 0.28s ease-out both;
+}
+
+/* Responsive */
+@media (max-width: 560px) {
+  .wizard-progress {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+    margin-bottom: 24px;
+  }
+
+  .wizard-step {
+    max-width: none;
+    width: 100%;
+  }
+
+  .wizard-step::after {
+    display: none;
+  }
+
+  .wizard-nav .btn {
+    min-width: 0;
+    flex: 1;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   MODAL · Turno confirmado
+   ═══════════════════════════════════════════════════════════ */
+
+.reserva-exitosa-modal {
+  max-width: 480px;
+  text-align: center;
+  align-items: center;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 36px 32px;
+}
+
+.reserva-exito-titulo {
+  font-family: var(--fuente-titulo);
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--rosa-700);
+  margin: 4px 0 0;
+  line-height: 1.2;
+}
+
+.reserva-exito-subtitulo {
+  font-size: 0.9rem;
+  color: var(--texto-soft);
+  margin: 0 0 4px;
+  max-width: 320px;
+}
+
+.reserva-exitosa-modal .reserva-resumen {
+  margin: 4px 0 8px;
+  font-size: 0.92rem;
+  text-align: center;
+}
+
+.reserva-exitosa-modal .reserva-codigo {
+  width: 100%;
+  margin: 0 0 6px;
+}
+
+.reserva-exitosa-modal .reserva-acciones {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  flex-wrap: wrap;
+  width: 100%;
+  margin-top: 6px;
+}
+
+.reserva-exitosa-modal .reserva-acciones .btn {
+  flex: 1 1 auto;
+  min-width: 130px;
+}
+
+@media (max-width: 480px) {
+  .reserva-exitosa-modal {
+    padding: 28px 22px;
+  }
+
+  .reserva-exitosa-modal .reserva-acciones {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .reserva-exitosa-modal .reserva-acciones .btn {
+    width: 100%;
+  }
 }
