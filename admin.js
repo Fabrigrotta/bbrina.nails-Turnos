@@ -216,6 +216,7 @@ function getRangoMesActual() {
 function crearCardReserva(reserva) {
   const hoyISO = getFechaISO();
   const esPasada = reserva.fecha < hoyISO;
+  const esHoy = reserva.fecha === hoyISO;
 
   const card = document.createElement('article');
   card.className = 'admin-card';
@@ -230,7 +231,12 @@ function crearCardReserva(reserva) {
 
   const badge = document.createElement('span');
   badge.className = 'admin-card-badge';
-  badge.textContent = esPasada ? 'Pasada' : 'Próxima';
+  if (esHoy) {
+    badge.classList.add('admin-card-badge-hoy');
+    badge.textContent = 'Hoy';
+  } else {
+    badge.textContent = esPasada ? 'Pasada' : 'Próxima';
+  }
 
   header.appendChild(codigo);
   header.appendChild(badge);
