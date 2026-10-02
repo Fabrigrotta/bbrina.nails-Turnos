@@ -95,23 +95,28 @@ function horarioOcupado(fechaISO, horario, ignorarCodigo = null) {
 /* ───────────────────────────────────────────────────────────
    AUTH · guard de sesión (el login vive en index.html)
    ─────────────────────────────────────────────────────────── */
+
 function estaLogueado() {
   return sessionStorage.getItem(CONFIG.authKey) === '1';
 }
 
 function cerrarSesion() {
   sessionStorage.removeItem(CONFIG.authKey);
-  window.location.href = 'index.html';
+  // Redirigimos reemplazando el historial para que no se pueda volver con "atrás"
+  window.location.replace('index.html');
 }
 
 function initLogout() {
   const btn = $('#btn-logout');
-  if (btn) {
-    btn.addEventListener('click', (e) => {
-      e.preventDefault();
-      cerrarSesion();
-    });
+  if (!btn) {
+    console.warn('[admin.js] No encontré #btn-logout');
+    return;
   }
+  btn.addEventListener('click', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    cerrarSesion();
+  });
 }
 
 /* ───────────────────────────────────────────────────────────
@@ -326,9 +331,6 @@ function abrirEditar(codigo) {
 }
 
 function guardarEdicion() {
-  state.reservaEditando = null;
-  cerrarModal('modal-editar');
-  renderTodo();
   const reserva = state.reservaEditando;
   if (!reserva) return;
 

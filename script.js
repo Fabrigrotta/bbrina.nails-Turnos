@@ -274,12 +274,17 @@ function renderCalendario() {
   const mesActual = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
   const puedeIrAtras = mesVisible > mesActual;
 
+  // ¿Ya estamos en el mes actual? → el botón "Hoy" se deshabilita
+  const enMesActual = mesVisible.getFullYear() === hoy.getFullYear()
+                    && mesVisible.getMonth() === hoy.getMonth();
+
   cont.innerHTML = `
     <div class="calendario-header">
       <span class="calendario-titulo">${titulo}</span>
       <div class="calendario-nav">
         <button type="button" class="calendario-nav-btn" id="cal-prev" ${puedeIrAtras ? '' : 'disabled'} aria-label="Mes anterior">‹</button>
         <button type="button" class="calendario-nav-btn" id="cal-next" aria-label="Mes siguiente">›</button>
+        <button type="button" class="calendario-hoy-btn" id="cal-hoy" ${enMesActual ? 'disabled' : ''} aria-label="Ir al mes actual">Hoy</button>
       </div>
     </div>
     <div class="calendario-grid">
@@ -356,6 +361,15 @@ function renderCalendario() {
   if (next) {
     next.addEventListener('click', () => {
       mesVisible = new Date(anio, mes + 1, 1);
+      renderCalendario();
+    });
+  }
+
+  const btnHoy = cont.querySelector('#cal-hoy');
+  if (btnHoy) {
+    btnHoy.addEventListener('click', () => {
+      const ahora = new Date();
+      mesVisible = new Date(ahora.getFullYear(), ahora.getMonth(), 1);
       renderCalendario();
     });
   }
@@ -612,14 +626,21 @@ function initFormulario() {
     });
   }
 
-  // Botón "Confirmar por WhatsApp" → guarda, abre WhatsApp y muestra éxito
+  // Botón "Confirmar" → guarda la reserva y muestra éxito
+  // ⚠️ WhatsApp desactivado temporalmente. Para reactivar, descomentá la línea de abrirWhatsApp.
   const btnConfirmar = $('#btn-confirmar-whatsapp');
   if (btnConfirmar) {
     btnConfirmar.addEventListener('click', () => {
       if (!reservaPendiente) return;
 
       guardarReserva(reservaPendiente);
-      abrirWhatsApp(armarMensaje(reservaPendiente));
+
+      // 🔕 DESACTIVADO: enviar a WhatsApp
+      // abrirWhatsApp(armarMensaje(reservaPendiente));
+
+      // Por si querés ver el mensaje que se enviaría, lo dejamos en consola
+      console.log('[Reserva] Mensaje que se enviaría por WhatsApp:\n' + armarMensaje(reservaPendiente));
+
       mostrarReservaExitosa(reservaPendiente);
 
       // Guardamos la reserva confirmada para poder editarla desde el cartel

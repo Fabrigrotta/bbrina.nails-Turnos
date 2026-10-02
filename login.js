@@ -1,6 +1,6 @@
 /* ═══════════════════════════════════════════════════════════
    bbrina.nails · Turnos — login.js
-   Modal de login para el panel de administración
+   Modal de login + badge de sesión activa en la home
    ═══════════════════════════════════════════════════════════ */
 
 (function () {
@@ -15,6 +15,10 @@
 
   const $  = (sel) => document.querySelector(sel);
   const $$ = (sel) => document.querySelectorAll(sel);
+
+  function estaLogueado() {
+    return sessionStorage.getItem(AUTH.storageKey) === '1';
+  }
 
   function abrirLogin() {
     const m = $('#modal-login');
@@ -35,6 +39,29 @@
     if (m) m.hidden = true;
   }
 
+  /* Muestra el badge "Modo administrador" centrado en la navbar si hay sesión activa */
+  function actualizarBadgeSesion() {
+    const headerInner = document.querySelector('.header-inner');
+    const btnCuenta = $('#btn-cuenta');
+    if (!headerInner || !btnCuenta) return;
+
+    // Sacamos un badge previo si ya existía
+    const previo = headerInner.querySelector('.admin-badge');
+    if (previo) previo.remove();
+
+    if (!estaLogueado()) return;
+
+    // Creamos el badge "Modo administrador" (no clickeable, solo informativo)
+    const badge = document.createElement('span');
+    badge.className = 'admin-badge';
+    badge.innerHTML = `
+      <span class="admin-badge-dot" aria-hidden="true"></span>
+      Modo administrador
+    `;
+    badge.setAttribute('aria-label', 'Sesión de administrador activa');
+    headerInner.appendChild(badge);
+  }
+
   function init() {
     console.log('[login.js] init OK');
 
@@ -46,7 +73,7 @@
     } else {
       btnCuenta.addEventListener('click', () => {
         console.log('[login.js] click en #btn-cuenta');
-        if (sessionStorage.getItem(AUTH.storageKey) === '1') {
+        if (estaLogueado()) {
           window.location.href = AUTH.redirectTo;
           return;
         }
@@ -90,12 +117,14 @@
 
     // Si la URL tiene #login, abrimos el modal automáticamente
     if (window.location.hash === '#login') abrirLogin();
+
+    // Actualizamos el badge de sesión al cargar
+    actualizarBadgeSesion();
   }
 
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', init);
   } else {
-    // El DOM ya está listo (por ejemplo, si el script se carga tarde)
     init();
   }
 })();

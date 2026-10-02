@@ -453,6 +453,34 @@ button { font-family: inherit; }
   cursor: not-allowed;
 }
 
+.calendario-hoy-btn {
+  font-family: inherit;
+  font-size: 0.78rem;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  color: var(--rosa-700);
+  background: var(--rosa-50);
+  border: 1.5px solid var(--rosa-100);
+  border-radius: var(--radius-full);
+  padding: 6px 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  height: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.calendario-hoy-btn:hover:not(:disabled) {
+  border-color: var(--rosa-300);
+  background: var(--rosa-100);
+}
+
+.calendario-hoy-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
 .calendario-grid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
@@ -1300,14 +1328,12 @@ button { font-family: inherit; }
   color: var(--rosa-700);
 }
 
-/* ── Badge "Modo administrador" ── */
-.admin-badge-wrapper {
-  display: flex;
-  justify-content: center;
-  padding: 22px 20px 0;
-}
-
+/* ── Badge "Modo administrador" (centrado en la navbar) ── */
 .admin-badge {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
   display: inline-flex;
   align-items: center;
   gap: 8px;
@@ -1321,6 +1347,8 @@ button { font-family: inherit; }
   border-radius: var(--radius-full);
   padding: 8px 18px;
   box-shadow: var(--sombra-sm);
+  white-space: nowrap;
+  pointer-events: none;
 }
 
 .admin-badge-dot {
@@ -1329,6 +1357,19 @@ button { font-family: inherit; }
   border-radius: 50%;
   background: #4caf82;
   box-shadow: 0 0 0 3px rgba(76, 175, 130, 0.2);
+}
+
+/* El header necesita position relative para que el badge absoluto se ancle a él */
+.header-inner {
+  position: relative;
+}
+
+@media (max-width: 640px) {
+  .admin-badge {
+    font-size: 0.62rem;
+    padding: 6px 12px;
+    letter-spacing: 0.12em;
+  }
 }
 
 /* ── Bloques del panel admin ── */
