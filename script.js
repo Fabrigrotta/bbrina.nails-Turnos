@@ -398,11 +398,42 @@ function abrirWhatsApp(mensaje) {
   window.open(url, '_blank');
 }
 
+function mostrarRevision(reserva) {
+  const rev = $('#revision-turno');
+  const resumen = $('#revision-resumen');
+  const form = $('#form-turno');
+  const header = $('#reservar-header');
+
+  if (!rev || !resumen || !form) return;
+
+  const serv = CONFIG.servicios.find(s => s.id === reserva.servicio);
+  const nombreServ = serv ? serv.nombre : reserva.servicio;
+  const duracion = serv ? ` (${serv.duracion} min)` : '';
+
+  resumen.textContent =
+    `Servicio: ${nombreServ}${duracion}\n` +
+    `Fecha: ${formatearFecha(reserva.fecha)}\n` +
+    `Horario: ${reserva.horario} hs\n` +
+    `Nombre: ${reserva.nombre}\n` +
+    `WhatsApp: ${reserva.whatsapp}` +
+    (reserva.nota ? `\nNota: ${reserva.nota}` : '');
+
+  form.hidden = true;
+  if (header) header.hidden = true;
+
+  const card = $('#reserva-exitosa');
+  if (card) card.hidden = true;
+
+  rev.hidden = false;
+  rev.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
 function mostrarReservaExitosa(reserva) {
   const card = $('#reserva-exitosa');
   const resumen = $('#reserva-resumen');
   const form = $('#form-turno');
   const header = $('#reservar-header');
+  const rev = $('#revision-turno');
 
   if (!card || !resumen || !form) return;
 
@@ -417,6 +448,7 @@ function mostrarReservaExitosa(reserva) {
 
   form.hidden = true;
   if (header) header.hidden = true;
+  if (rev) rev.hidden = true;
   card.hidden = false;
   card.scrollIntoView({ behavior: 'smooth', block: 'center' });
 }
@@ -425,6 +457,7 @@ function resetFormulario() {
   const form = $('#form-turno');
   const card = $('#reserva-exitosa');
   const header = $('#reservar-header');
+  const rev = $('#revision-turno');
 
   state.servicioSeleccionado = null;
   state.fechaSeleccionada = null;
@@ -436,6 +469,7 @@ function resetFormulario() {
   }
   if (header) header.hidden = false;
   if (card) card.hidden = true;
+  if (rev) rev.hidden = true;
 
   ocultarError();
   renderServicios();
@@ -449,6 +483,10 @@ function resetFormulario() {
 function initFormulario() {
   const form = $('#form-turno');
   if (!form) return;
+
+  // Guardamos los datos armados en el paso de revisión,
+  // para no tener que releer el DOM cuando confirma.
+  let reservaPendiente = null;
 
   form.addEventListener('submit', (e) => {
     e.preventDefault();
@@ -469,15 +507,41 @@ function initFormulario() {
       return;
     }
 
-    const reserva = {
+    reservaPendiente = {
       ...datos,
       creadaEn: new Date().toISOString()
     };
 
-    guardarReserva(reserva);
-    abrirWhatsApp(armarMensaje(reserva));
-    mostrarReservaExitosa(reserva);
+    mostrarRevision(reservaPendiente);
   });
+
+  // Botón "Volver" → vuelve al form sin perder lo cargado
+  const btnVolver = $('#btn-volver-revision');
+  if (btnVolver) {
+    btnVolver.addEventListener('click', () => {
+      const rev = $('#revision-turno');
+      if (rev) rev.hidden = true;
+      form.hidden = false;
+      const header = $('#reservar-header');
+      if (header) header.hidden = false;
+      const reservar = document.querySelector('#reservar');
+      if (reservar) reservar.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  }
+
+  // Botón "Confirmar por WhatsApp" → guarda, abre WhatsApp y muestra éxito
+  const btnConfirmar = $('#btn-confirmar-whatsapp');
+  if (btnConfirmar) {
+    btnConfirmar.addEventListener('click', () => {
+      if (!reservaPendiente) return;
+
+      guardarReserva(reservaPendiente);
+      abrirWhatsApp(armarMensaje(reservaPendiente));
+      mostrarReservaExitosa(reservaPendiente);
+
+      reservaPendiente = null;
+    });
+  }
 
   const btnNueva = $('#btn-nueva-reserva');
   if (btnNueva) {
