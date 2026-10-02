@@ -51,7 +51,9 @@ const CONFIG = {
 const state = {
   servicioSeleccionado: null,
   fechaSeleccionada: null,
-  horarioSeleccionado: null
+  horarioSeleccionado: null,
+  // Edición: guarda el código de una reserva que estamos editando
+  codigoEnEdicion: null
 };
 
 /* ───────────────────────────────────────────────────────────
@@ -66,6 +68,26 @@ function getReservas() {
   } catch {
     return [];
   }
+}
+
+function generarCodigoReserva() {
+  const existentes = new Set(
+    getReservas().map(r => (r.codigo || '').trim())
+  );
+
+  let codigo;
+  let intentos = 0;
+
+  do {
+    // 6 dígitos aleatorios seguros (000000–999999)
+    const bytes = new Uint32Array(1);
+    crypto.getRandomValues(bytes);
+    const num = bytes[0] % 1000000;
+    codigo = String(num).padStart(6, '0');
+    intentos++;
+  } while (existentes.has(codigo) && intentos < 50);
+
+  return codigo;
 }
 
 function guardarReserva(reserva) {
@@ -431,6 +453,7 @@ function mostrarRevision(reserva) {
 function mostrarReservaExitosa(reserva) {
   const card = $('#reserva-exitosa');
   const resumen = $('#reserva-resumen');
+  const codigoEl = $('#reserva-codigo-valor');
   const form = $('#form-turno');
   const header = $('#reservar-header');
   const rev = $('#revision-turno');
@@ -446,11 +469,63 @@ function mostrarReservaExitosa(reserva) {
     `Horario: ${reserva.horario} hs\n` +
     `A nombre de: ${reserva.nombre}`;
 
+  if (codigoEl) codigoEl.textContent = reserva.codigo || '—';
+
   form.hidden = true;
   if (header) header.hidden = true;
   if (rev) rev.hidden = true;
   card.hidden = false;
   card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+// Guarda la última reserva confirmada para poder editarla desde el cartel de éxito
+let ultimaReservaConfirmada = null;
+
+function editarReserva() {
+  if (!ultimaReservaConfirmada) return;
+
+  const reserva = ultimaReservaConfirmada;
+
+  // 1) Liberamos el turno: quitamos la reserva del localStorage
+  const reservas = getReservas();
+  const filtradas = reservas.filter(r => {
+    const rCod = (r.codigo || '').replace(/\D/g, '').padStart(6, '0');
+    const codNorm = (reserva.codigo || '').replace(/\D/g, '').padStart(6, '0');
+    return rCod !== codNorm;
+  });
+  localStorage.setItem(CONFIG.storageKey, JSON.stringify(filtradas));
+
+  // 2) Precargamos el form con los datos originales
+  state.servicioSeleccionado = reserva.servicio;
+  state.fechaSeleccionada = reserva.fecha;
+  state.horarioSeleccionado = reserva.horario;
+  state.codigoEnEdicion = reserva.codigo;
+
+  const inputNombre = $('#input-nombre');
+  const inputWhats = $('#input-whatsapp');
+  const inputNota = $('#input-nota');
+  if (inputNombre) inputNombre.value = reserva.nombre || '';
+  if (inputWhats)  inputWhats.value  = reserva.whatsapp || '';
+  if (inputNota)   inputNota.value   = reserva.nota || '';
+
+  // 3) Refrescamos calendario, servicios y horarios con la selección restaurada
+  renderServicios();
+  renderCalendario();
+  renderHorarios();
+
+  // 4) Ocultamos el cartel de éxito y mostramos el form
+  const card = $('#reserva-exitosa');
+  const form = $('#form-turno');
+  const header = $('#reservar-header');
+  if (card) card.hidden = true;
+  if (form) form.hidden = false;
+  if (header) header.hidden = false;
+
+  // 5) Limpiamos la referencia a la reserva confirmada (ya no aplica)
+  ultimaReservaConfirmada = null;
+
+  const reservar = document.querySelector('#reservar');
+  if (reservar) reservar.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 function resetFormulario() {
@@ -462,6 +537,8 @@ function resetFormulario() {
   state.servicioSeleccionado = null;
   state.fechaSeleccionada = null;
   state.horarioSeleccionado = null;
+  state.codigoEnEdicion = null;
+  ultimaReservaConfirmada = null;
 
   if (form) {
     form.reset();
@@ -507,8 +584,14 @@ function initFormulario() {
       return;
     }
 
+    // Si venimos de "Editar turno", reusamos el código original.
+    // Si no, generamos uno nuevo.
+    const codigo = state.codigoEnEdicion || generarCodigoReserva();
+    state.codigoEnEdicion = null; // se consume una sola vez
+
     reservaPendiente = {
       ...datos,
+      codigo,
       creadaEn: new Date().toISOString()
     };
 
@@ -539,13 +622,21 @@ function initFormulario() {
       abrirWhatsApp(armarMensaje(reservaPendiente));
       mostrarReservaExitosa(reservaPendiente);
 
+      // Guardamos la reserva confirmada para poder editarla desde el cartel
+      ultimaReservaConfirmada = reservaPendiente;
+
       reservaPendiente = null;
     });
   }
 
-  const btnNueva = $('#btn-nueva-reserva');
-  if (btnNueva) {
-    btnNueva.addEventListener('click', resetFormulario);
+  const btnConfirmarFinal = $('#btn-confirmar-final');
+  if (btnConfirmarFinal) {
+    btnConfirmarFinal.addEventListener('click', resetFormulario);
+  }
+
+  const btnEditar = $('#btn-editar-reserva');
+  if (btnEditar) {
+    btnEditar.addEventListener('click', editarReserva);
   }
 }
 
@@ -558,6 +649,158 @@ function initFooter() {
 }
 
 /* ───────────────────────────────────────────────────────────
+   CONSULTAR TURNO
+   ─────────────────────────────────────────────────────────── */
+function normalizarWhatsapp(tel) {
+  return (tel || '').replace(/\D/g, '');
+}
+
+function buscarReservas(whatsapp, codigo) {
+  const telNorm = normalizarWhatsapp(whatsapp);
+  // Solo dígitos y rellenamos con ceros a la izquierda por si el usuario
+  // tipea "4821" en lugar de "004821".
+  const codNorm = (codigo || '').replace(/\D/g, '').padStart(6, '0');
+
+  return getReservas().filter(r => {
+    const rCod = (r.codigo || '').replace(/\D/g, '').padStart(6, '0');
+    return normalizarWhatsapp(r.whatsapp) === telNorm && rCod === codNorm;
+  });
+}
+
+function renderConsulta(reservas) {
+  const cont = $('#consultar-resultado');
+  if (!cont) return;
+
+  cont.innerHTML = '';
+
+  if (!reservas.length) {
+    const p = document.createElement('p');
+    p.className = 'consultar-vacio';
+    p.textContent = 'No encontramos una reserva con esos datos. Verificá el WhatsApp y el código.';
+    cont.appendChild(p);
+    cont.hidden = false;
+    return;
+  }
+
+  const hoyISO = getFechaISO();
+  const futuras = reservas.filter(r => r.fecha >= hoyISO);
+  const pasadas = reservas.filter(r => r.fecha < hoyISO);
+
+  [...futuras, ...pasadas].forEach(reserva => {
+    const serv = CONFIG.servicios.find(s => s.id === reserva.servicio);
+    const nombreServ = serv ? serv.nombre : reserva.servicio;
+    const esPasada = reserva.fecha < hoyISO;
+
+    const card = document.createElement('div');
+    card.className = 'consultar-card';
+    if (esPasada) card.style.opacity = '0.65';
+
+    const resumen = document.createElement('p');
+    resumen.className = 'consultar-resumen';
+    resumen.textContent =
+      `Código: ${reserva.codigo || '—'}\n` +
+      `Servicio: ${nombreServ}\n` +
+      `Fecha: ${formatearFecha(reserva.fecha)}\n` +
+      `Horario: ${reserva.horario} hs\n` +
+      `A nombre de: ${reserva.nombre}` +
+      (reserva.nota ? `\nNota: ${reserva.nota}` : '') +
+      (esPasada ? `\n\n(Esta reserva ya pasó.)` : '');
+
+    card.appendChild(resumen);
+
+    if (!esPasada) {
+      const acciones = document.createElement('div');
+      acciones.className = 'consultar-acciones';
+
+      const btnCancelar = document.createElement('button');
+      btnCancelar.type = 'button';
+      btnCancelar.className = 'btn btn-secondary';
+      btnCancelar.textContent = 'Cancelar turno';
+      btnCancelar.addEventListener('click', () => {
+        const ok = window.confirm('¿Seguro que querés cancelar este turno? Esta acción no se puede deshacer.');
+        if (!ok) return;
+        cancelarReserva(reserva.codigo);
+      });
+
+      acciones.appendChild(btnCancelar);
+      card.appendChild(acciones);
+    }
+
+    cont.appendChild(card);
+  });
+
+  cont.hidden = false;
+  cont.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function cancelarReserva(codigo) {
+  const reservas = getReservas();
+  const codNorm = (codigo || '').replace(/\D/g, '').padStart(6, '0');
+
+  const filtradas = reservas.filter(r => {
+    const rCod = (r.codigo || '').replace(/\D/g, '').padStart(6, '0');
+    return rCod !== codNorm;
+  });
+
+  localStorage.setItem(CONFIG.storageKey, JSON.stringify(filtradas));
+
+  const form = $('#form-consultar');
+  const cont = $('#consultar-resultado');
+  const error = $('#consultar-error');
+
+  if (form) form.reset();
+  if (error) error.hidden = true;
+  if (cont) {
+    cont.innerHTML = '';
+    const p = document.createElement('p');
+    p.className = 'consultar-vacio';
+    p.textContent = 'Tu turno fue cancelado. Si querés, podés reservar otro horario.';
+    cont.appendChild(p);
+    cont.hidden = false;
+  }
+
+  // Refrescar calendario/horarios para que el horario liberado vuelva a estar disponible
+  if (typeof renderCalendario === 'function') renderCalendario();
+  if (typeof renderHorarios === 'function') renderHorarios();
+}
+
+function initConsultar() {
+  const form = $('#form-consultar');
+  if (!form) return;
+
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+
+    const error = $('#consultar-error');
+    if (error) error.hidden = true;
+
+    const whatsapp = $('#input-consultar-whatsapp')?.value.trim() || '';
+    const codigo = $('#input-consultar-codigo')?.value.trim() || '';
+
+    if (normalizarWhatsapp(whatsapp).length < 8) {
+      if (error) {
+        error.textContent = 'Ingresá un WhatsApp válido.';
+        error.hidden = false;
+      }
+      return;
+    }
+
+    const codigoLimpio = codigo.replace(/\D/g, '');
+    if (codigoLimpio.length === 0) {
+      if (error) {
+        error.textContent = 'Ingresá el código de reserva (solo números).';
+        error.hidden = false;
+      }
+      return;
+    }
+
+    const encontradas = buscarReservas(whatsapp, codigo);
+    renderConsulta(encontradas);
+  });
+}
+
+
+/* ───────────────────────────────────────────────────────────
    INIT
    ─────────────────────────────────────────────────────────── */
 document.addEventListener('DOMContentLoaded', () => {
@@ -565,5 +808,6 @@ document.addEventListener('DOMContentLoaded', () => {
   initCalendario();
   renderHorarios();
   initFormulario();
+  initConsultar();
   initFooter();
 });

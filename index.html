@@ -27,6 +27,7 @@
       </a>
       <nav class="header-nav">
         <a href="#reservar">Reservar</a>
+        <a href="#consultar">Consultar</a>
         <a href="#acerca">Acerca</a>
         <a href="#info">Info</a>
       </nav>
@@ -50,8 +51,44 @@
     </div>
   </section>
 
-  <!-- ═══════════════ FORMULARIO DE RESERVA ═══════════════ -->
   <main>
+
+    <!-- ═══════════════ CONSULTAR TURNO ═══════════════ -->
+    <section id="consultar" class="section consultar">
+      <div class="container">
+        <header class="section-header">
+          <span class="section-tag">¿Ya reservaste?</span>
+          <h2>Consultá tu turno</h2>
+          <p class="section-text">Ingresá el WhatsApp y el código que te dimos al reservar.</p>
+        </header>
+
+        <form id="form-consultar" class="card form-consultar" novalidate>
+          <div class="field-row">
+            <div class="field">
+              <label for="input-consultar-whatsapp">WhatsApp</label>
+              <input type="tel" id="input-consultar-whatsapp" name="whatsapp" placeholder="Ej: 11 2345 6789" required />
+            </div>
+            <div class="field">
+              <label for="input-consultar-codigo">Código de reserva</label>
+              <input type="text" id="input-consultar-codigo" name="codigo" placeholder="Ej: 482913" inputmode="numeric" pattern="[0-9]*" autocomplete="off" required />
+            </div>
+          </div>
+
+          <p id="consultar-error" class="form-error" role="alert" hidden></p>
+
+          <button type="submit" class="btn btn-primary btn-block">
+            Buscar turno
+          </button>
+        </form>
+
+        <!-- Resultado (oculto por defecto) -->
+        <div id="consultar-resultado" class="consultar-resultado" hidden>
+          <!-- Render dinámico desde script.js -->
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════ FORMULARIO DE RESERVA ═══════════════ -->
     <section id="reservar" class="section reservar">
       <div class="container">
         <header class="section-header" id="reservar-header">
@@ -66,7 +103,7 @@
           <fieldset class="field-group">
             <legend class="field-legend">1. Elegí el servicio</legend>
             <div id="servicios-grid" class="servicios-grid">
-              <!-- Render dinámico desde app.js -->
+              <!-- Render dinámico desde script.js -->
             </div>
           </fieldset>
 
@@ -82,7 +119,7 @@
           <fieldset class="field-group">
             <legend class="field-legend">3. Elegí el horario</legend>
             <div id="horarios-grid" class="horarios-grid">
-              <!-- Render dinámico desde app.js -->
+              <!-- Render dinámico desde script.js -->
               <p class="hint">Elegí primero una fecha para ver los horarios disponibles.</p>
             </div>
           </fieldset>
@@ -137,11 +174,21 @@
         <!-- Resumen post-reserva (oculto por defecto) -->
         <div id="reserva-exitosa" class="card reserva-exitosa" hidden>
           <span class="check-icon" aria-hidden="true">✓</span>
-            <h3>¡Turno confirmado!</h3>
+          <h3>¡Turno confirmado!</h3>
           <p id="reserva-resumen" class="reserva-resumen"></p>
-            <button type="button" id="btn-nueva-reserva" class="btn btn-secondary">
-              Aceptar
+          <div class="reserva-codigo">
+            <span class="reserva-codigo-label">Tu código de reserva</span>
+            <strong id="reserva-codigo-valor" class="reserva-codigo-valor">—</strong>
+            <span class="reserva-codigo-hint">Guardalo para consultar o cancelar tu turno.</span>
+          </div>
+          <div class="reserva-acciones">
+            <button type="button" id="btn-editar-reserva" class="btn btn-secondary">
+              Editar turno
             </button>
+            <button type="button" id="btn-confirmar-final" class="btn btn-primary">
+              Confirmar
+            </button>
+          </div>
         </div>
       </div>
     </section>
@@ -173,11 +220,13 @@
         <div class="card acerca-card">
 
           <!-- Avatar (placeholder con iniciales · reemplazar por <img> cuando tengas foto) -->
-          <div class="acerca-avatar">
-            <img src="assets/sabrina.jpg" alt="Sabrina, manicura de bbrina.nails" />
+          <div class="acerca-avatar" aria-hidden="true">
+            <span>SB</span>
           </div>
 
           <div class="acerca-info">
+            <span class="section-tag">Acerca de</span>
+
             <!-- EDITAR: nombre y handle -->
             <h2 class="acerca-nombre">Sabrina · bbrina.nails</h2>
             <span class="acerca-handle">Nail artist</span>
@@ -190,14 +239,6 @@
 
             <!-- Redes -->
             <div class="acerca-redes">
-              <!-- EDITAR: reemplazar href por el Instagram real -->
-              <a href="#" class="acerca-red" aria-label="Instagram" target="_blank" rel="noopener">
-                <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                  <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/>
-                  <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/>
-                  <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/>
-                </svg>
-              </a>
               <!-- EDITAR: reemplazar href por el número real (mismo que CONFIG.whatsapp) -->
               <a href="https://wa.me/5491100000000" class="acerca-red" aria-label="WhatsApp" target="_blank" rel="noopener">
                 <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor" aria-hidden="true">
@@ -206,6 +247,25 @@
               </a>
             </div>
           </div>
+
+          <!-- Banner CTA Instagram -->
+          <aside class="acerca-cta">
+            <div class="acerca-cta-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/>
+                <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/>
+                <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/>
+              </svg>
+            </div>
+            <div class="acerca-cta-texto">
+              <strong>¿Querés ver más trabajos?</strong>
+              <span>En Instagram subo los diseños nuevos, novedades y promos.</span>
+            </div>
+            <!-- EDITAR: reemplazar href por el Instagram real -->
+            <a href="#" class="btn btn-primary acerca-cta-btn" target="_blank" rel="noopener">
+              Seguime en Instagram →
+            </a>
+          </aside>
 
         </div>
       </div>
