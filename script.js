@@ -52,8 +52,8 @@ const state = {
   servicioSeleccionado: null,
   fechaSeleccionada: null,
   horarioSeleccionado: null,
-  // Edición: guarda el código de una reserva que estamos editando
-  codigoEnEdicion: null
+  codigoEnEdicion: null,
+  reservaEnEdicion: null
 };
 
 /* ───────────────────────────────────────────────────────────
@@ -92,7 +92,20 @@ function generarCodigoReserva() {
 
 function guardarReserva(reserva) {
   const reservas = getReservas();
-  reservas.push(reserva);
+
+  // Si estamos editando (mismo código), reemplazamos la reserva original
+  const codNuevo = (reserva.codigo || '').replace(/\D/g, '').padStart(6, '0');
+  const existenteIdx = reservas.findIndex(r => {
+    const rCod = (r.codigo || '').replace(/\D/g, '').padStart(6, '0');
+    return rCod === codNuevo;
+  });
+
+  if (existenteIdx >= 0) {
+    reservas[existenteIdx] = reserva;
+  } else {
+    reservas.push(reserva);
+  }
+
   localStorage.setItem(CONFIG.storageKey, JSON.stringify(reservas));
 }
 
@@ -115,7 +128,17 @@ function formatearFecha(iso) {
 }
 
 function horarioOcupado(fechaISO, horario) {
-  return getReservas().some(r => r.fecha === fechaISO && r.horario === horario);
+  // Si estamos editando una reserva, ignoramos esa reserva
+  // en la validación (así el propio turno no aparece como "ocupado").
+  const codEnEdicion = state.codigoEnEdicion
+    ? state.codigoEnEdicion.replace(/\D/g, '').padStart(6, '0')
+    : null;
+
+  return getReservas().some(r => {
+    const rCod = (r.codigo || '').replace(/\D/g, '').padStart(6, '0');
+    if (codEnEdicion && rCod === codEnEdicion) return false;
+    return r.fecha === fechaISO && r.horario === horario;
+  });
 }
 
 function mostrarError(msg) {
@@ -502,39 +525,33 @@ function mostrarReservaExitosa(reserva) {
 // Guarda la última reserva confirmada para poder editarla desde el cartel de éxito
 let ultimaReservaConfirmada = null;
 
-function editarReserva() {
-  if (!ultimaReservaConfirmada) return;
+function editarReserva(reservaParam) {
+  const reserva = reservaParam || ultimaReservaConfirmada;
+  if (!reserva) return;
 
-  const reserva = ultimaReservaConfirmada;
+  // 1) Guardar la reserva en edición (NO la borramos del storage)
+  state.reservaEnEdicion = reserva;
 
-  // 1) Liberamos el turno: quitamos la reserva del localStorage
-  const reservas = getReservas();
-  const filtradas = reservas.filter(r => {
-    const rCod = (r.codigo || '').replace(/\D/g, '').padStart(6, '0');
-    const codNorm = (reserva.codigo || '').replace(/\D/g, '').padStart(6, '0');
-    return rCod !== codNorm;
-  });
-  localStorage.setItem(CONFIG.storageKey, JSON.stringify(filtradas));
-
-  // 2) Precargamos el form con los datos originales
+  // 2) Precargar el estado con los datos originales
   state.servicioSeleccionado = reserva.servicio;
   state.fechaSeleccionada = reserva.fecha;
   state.horarioSeleccionado = reserva.horario;
   state.codigoEnEdicion = reserva.codigo;
 
+  // 3) Precargar los inputs
   const inputNombre = $('#input-nombre');
-  const inputWhats = $('#input-whatsapp');
-  const inputNota = $('#input-nota');
+  const inputWhats  = $('#input-whatsapp');
+  const inputNota   = $('#input-nota');
   if (inputNombre) inputNombre.value = reserva.nombre || '';
   if (inputWhats)  inputWhats.value  = reserva.whatsapp || '';
   if (inputNota)   inputNota.value   = reserva.nota || '';
 
-  // 3) Refrescamos calendario, servicios y horarios con la selección restaurada
+  // 4) Refrescar el wizard con la selección restaurada
   renderServicios();
   renderCalendario();
   renderHorarios();
 
-  // 4) Ocultamos el cartel de éxito y mostramos el form
+  // 5) Mostrar el form, ocultar el modal de éxito (por si veníamos de ahí)
   const card = $('#reserva-exitosa');
   const form = $('#form-turno');
   const header = $('#reservar-header');
@@ -542,9 +559,19 @@ function editarReserva() {
   if (form) form.hidden = false;
   if (header) header.hidden = false;
 
-  // 5) Limpiamos la referencia a la reserva confirmada (ya no aplica)
+  // 6) Ocultar el resultado de consulta (ya estamos en modo edición)
+  const contConsultar = $('#consultar-resultado');
+  if (contConsultar) contConsultar.hidden = true;
+
+  // 7) Limpiar la referencia temporal
   ultimaReservaConfirmada = null;
 
+  // 8) Volver al paso 1 del wizard
+  if (typeof irAPasoDesdeEdicion === 'function') {
+    irAPasoDesdeEdicion(1);
+  }
+
+  // 9) Scroll al formulario
   const reservar = document.querySelector('#reservar');
   if (reservar) reservar.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
@@ -559,6 +586,7 @@ function resetFormulario() {
   state.fechaSeleccionada = null;
   state.horarioSeleccionado = null;
   state.codigoEnEdicion = null;
+  state.reservaEnEdicion = null;
   ultimaReservaConfirmada = null;
 
   if (form) {
@@ -742,15 +770,17 @@ function initFormulario() {
       setTimeout(() => {
         guardarReserva(reservaPendiente);
 
-        // 🔕 DESACTIVADO: enviar a WhatsApp
-        // abrirWhatsApp(armarMensaje(reservaPendiente));
-
         console.log('[Reserva] Mensaje que se enviaría por WhatsApp:\n' + armarMensaje(reservaPendiente));
 
         mostrarReservaExitosa(reservaPendiente);
 
         ultimaReservaConfirmada = reservaPendiente;
         reservaPendiente = null;
+
+        // Ya no estamos editando: limpiamos la referencia
+        state.reservaEnEdicion = null;
+        state.codigoEnEdicion = null;
+
         desactivarSpinner(btnConfirmar);
       }, 400);
     });
@@ -765,10 +795,13 @@ function initFormulario() {
   // Botón "Editar turno" del cartel de éxito
   const btnEditar = $('#btn-editar-reserva');
   if (btnEditar) {
-    btnEditar.addEventListener('click', editarReserva);
+    btnEditar.addEventListener('click', () => editarReserva());
   }
 
-  // Arrancamos en el paso 1
+  // Exponer irAPaso para que editarReserva() pueda resetear el wizard
+  // cuando se llama desde "Consultar turno".
+  window.irAPasoDesdeEdicion = irAPaso;
+
   irAPaso(1);
 }
 
@@ -840,20 +873,30 @@ function renderConsulta(reservas) {
 
     card.appendChild(resumen);
 
-    if (!esPasada) {
+        if (!esPasada) {
       const acciones = document.createElement('div');
       acciones.className = 'consultar-acciones';
 
+      const btnEditar = document.createElement('button');
+      btnEditar.type = 'button';
+      btnEditar.className = 'btn btn-secondary';
+      btnEditar.textContent = 'Editar turno';
+      btnEditar.addEventListener('click', () => editarReserva(reserva));
+
+      const btnCalendario = document.createElement('button');
+      btnCalendario.type = 'button';
+      btnCalendario.className = 'btn btn-secondary';
+      btnCalendario.textContent = 'Agregar al calendario';
+      btnCalendario.addEventListener('click', () => descargarICS(reserva));
+
       const btnCancelar = document.createElement('button');
       btnCancelar.type = 'button';
-      btnCancelar.className = 'btn btn-secondary';
+      btnCancelar.className = 'btn btn-secondary admin-btn-danger';
       btnCancelar.textContent = 'Cancelar turno';
-      btnCancelar.addEventListener('click', () => {
-        const ok = window.confirm('¿Seguro que querés cancelar este turno? Esta acción no se puede deshacer.');
-        if (!ok) return;
-        cancelarReserva(reserva.codigo);
-      });
+      btnCancelar.addEventListener('click', () => abrirConfirmCancelar(card, reserva.codigo));
 
+      acciones.appendChild(btnEditar);
+      acciones.appendChild(btnCalendario);
       acciones.appendChild(btnCancelar);
       card.appendChild(acciones);
     }

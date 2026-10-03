@@ -72,7 +72,15 @@
       <section class="admin-bloque">
         <header class="admin-bloque-header">
           <h3 class="admin-bloque-titulo">Todos los turnos</h3>
-          <span class="admin-bloque-contador" id="admin-contador">— reservas</span>
+          <div class="admin-bloque-acciones">
+            <span class="admin-bloque-contador" id="admin-contador">— reservas</span>
+            <button type="button" id="btn-exportar-csv" class="btn btn-secondary admin-btn-sm">
+              Exportar CSV
+            </button>
+            <button type="button" id="btn-borrar-todo" class="btn btn-secondary admin-btn-sm admin-btn-danger">
+              Borrar todo
+            </button>
+          </div>
         </header>
 
         <div class="admin-filtros admin-filtros-fecha">
@@ -166,6 +174,59 @@
       <div class="modal-acciones">
         <button type="button" class="btn btn-secondary" data-close="modal-cancelar">Volver</button>
         <button type="button" class="btn btn-primary" id="btn-confirmar-cancelar">Sí, cancelar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════ MODAL BORRAR TODO ═══════════════ -->
+  <div id="modal-borrar-todo" class="modal" hidden>
+    <div class="modal-backdrop" data-close="modal-borrar-todo"></div>
+    <div class="modal-card card">
+      <h3 class="modal-titulo modal-titulo-peligro">Borrar todos los turnos</h3>
+      <p class="modal-subtitulo">Esta acción es irreversible.</p>
+
+      <div class="modal-paso" id="borrar-paso-1">
+        <p class="modal-texto">
+          Vas a eliminar <strong>TODAS</strong> las reservas del sistema.
+          Se van a liberar todos los horarios y no se puede deshacer.
+        </p>
+        <p class="modal-texto">
+          ¿Estás segura de que querés continuar?
+        </p>
+      </div>
+
+      <div class="modal-paso" id="borrar-paso-2" hidden>
+        <p class="modal-texto">
+          Para confirmar, resolvé esta operación:
+        </p>
+
+        <div class="captcha-box">
+          <span class="captcha-pregunta" id="captcha-pregunta">— + —</span>
+          <input
+            type="text"
+            id="captcha-input"
+            class="captcha-input"
+            inputmode="numeric"
+            pattern="[0-9]*"
+            autocomplete="off"
+            placeholder="?"
+            maxlength="3"
+          />
+        </div>
+
+        <p id="captcha-error" class="form-error" role="alert" hidden></p>
+      </div>
+
+      <div class="modal-acciones" id="borrar-acciones-1">
+        <button type="button" class="btn btn-secondary" data-close="modal-borrar-todo">Cancelar</button>
+        <button type="button" class="btn btn-primary" id="btn-borrar-siguiente">Continuar</button>
+      </div>
+
+      <div class="modal-acciones" id="borrar-acciones-2" hidden>
+        <button type="button" class="btn btn-secondary" id="btn-borrar-volver">Volver</button>
+        <button type="button" class="btn btn-primary admin-btn-danger-solid" id="btn-borrar-confirmar" disabled>
+          Sí, borrar todo
+        </button>
       </div>
     </div>
   </div>

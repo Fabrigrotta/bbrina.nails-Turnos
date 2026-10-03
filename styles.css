@@ -1046,6 +1046,20 @@ button { font-family: inherit; }
   margin-top: 6px;
 }
 
+.consultar-card .consultar-acciones .btn {
+  flex: 1 1 auto;
+  min-width: 150px;
+  padding: 10px 18px;
+  font-size: 0.85rem;
+}
+
+@media (max-width: 480px) {
+  .consultar-card .consultar-acciones .btn {
+    min-width: 0;
+    width: 100%;
+  }
+}
+
 .consultar-vacio {
   text-align: center;
   color: var(--texto-soft);
@@ -1837,6 +1851,81 @@ button { font-family: inherit; }
     width: 100%;
     max-width: 280px;
   }
+}
+
+/* ── Modal borrar todo + captcha ── */
+.modal-titulo-peligro {
+  color: #b23a48;
+}
+
+.modal-paso {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.captcha-box {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: var(--rosa-50);
+  border: 1.5px dashed var(--rosa-300);
+  border-radius: var(--radius-md);
+  padding: 16px 20px;
+  margin: 6px 0 10px;
+  justify-content: center;
+}
+
+.captcha-pregunta {
+  font-family: var(--fuente-titulo);
+  font-size: 1.7rem;
+  font-weight: 700;
+  color: var(--rosa-700);
+  letter-spacing: 0.06em;
+}
+
+.captcha-input {
+  width: 90px;
+  font-family: var(--fuente-titulo);
+  font-size: 1.5rem;
+  font-weight: 700;
+  text-align: center;
+  color: var(--rosa-700);
+  background: var(--blanco);
+  border: 1.5px solid var(--rosa-200);
+  border-radius: var(--radius-sm);
+  padding: 8px 10px;
+  transition: border-color 0.2s ease;
+}
+
+.captcha-input:focus {
+  outline: none;
+  border-color: var(--rosa-500);
+  box-shadow: 0 0 0 4px rgba(189, 88, 120, 0.12);
+}
+
+.captcha-input::placeholder {
+  color: #c9b8bf;
+}
+
+/* Botón de borrar con fondo rojo sólido */
+.admin-btn-danger-solid {
+  background: linear-gradient(135deg, #d9534f, #b23a48);
+  color: var(--blanco);
+  border: none;
+}
+
+.admin-btn-danger-solid:hover:not(:disabled) {
+  background: linear-gradient(135deg, #c9302c, #9e2d3b);
+  transform: translateY(-2px);
+  box-shadow: 0 10px 24px rgba(217, 83, 79, 0.25);
+}
+
+.admin-btn-danger-solid:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
 }
 
 /* ═══════════════════════════════════════════════════════════

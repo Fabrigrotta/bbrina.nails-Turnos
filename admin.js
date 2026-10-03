@@ -530,6 +530,161 @@ function confirmarCancelar() {
 }
 
 /* ───────────────────────────────────────────────────────────
+   BORRAR TODO · doble confirmación con captcha
+   ─────────────────────────────────────────────────────────── */
+let captchaResultado = 0;
+
+function generarCaptcha() {
+  const a = Math.floor(Math.random() * 9) + 1;  // 1-9
+  const b = Math.floor(Math.random() * 9) + 1;  // 1-9
+  captchaResultado = a + b;
+
+  const pregunta = document.getElementById('captcha-pregunta');
+  if (pregunta) pregunta.textContent = `${a} + ${b}`;
+
+  const input = document.getElementById('captcha-input');
+  if (input) input.value = '';
+
+  const err = document.getElementById('captcha-error');
+  if (err) err.hidden = true;
+
+  const btnConfirmar = document.getElementById('btn-borrar-confirmar');
+  if (btnConfirmar) btnConfirmar.disabled = true;
+}
+
+function abrirBorrarTodo() {
+  // Resetear a paso 1
+  const paso1 = document.getElementById('borrar-paso-1');
+  const paso2 = document.getElementById('borrar-paso-2');
+  const acc1 = document.getElementById('borrar-acciones-1');
+  const acc2 = document.getElementById('borrar-acciones-2');
+
+  if (paso1) paso1.hidden = false;
+  if (paso2) paso2.hidden = true;
+  if (acc1) acc1.hidden = false;
+  if (acc2) acc2.hidden = true;
+
+  // Generar captcha nuevo (por si volvió a abrir)
+  generarCaptcha();
+
+  abrirModal('modal-borrar-todo');
+}
+
+function irAPasoBorrar() {
+  const paso1 = document.getElementById('borrar-paso-1');
+  const paso2 = document.getElementById('borrar-paso-2');
+  const acc1 = document.getElementById('borrar-acciones-1');
+  const acc2 = document.getElementById('borrar-acciones-2');
+
+  if (paso1) paso1.hidden = true;
+  if (paso2) paso2.hidden = false;
+  if (acc1) acc1.hidden = true;
+  if (acc2) acc2.hidden = false;
+
+  // Regenerar captcha por las dudas
+  generarCaptcha();
+
+  const input = document.getElementById('captcha-input');
+  if (input) setTimeout(() => input.focus(), 50);
+}
+
+function volverAPaso1Borrar() {
+  const paso1 = document.getElementById('borrar-paso-1');
+  const paso2 = document.getElementById('borrar-paso-2');
+  const acc1 = document.getElementById('borrar-acciones-1');
+  const acc2 = document.getElementById('borrar-acciones-2');
+
+  if (paso1) paso1.hidden = false;
+  if (paso2) paso2.hidden = true;
+  if (acc1) acc1.hidden = false;
+  if (acc2) acc2.hidden = true;
+}
+
+function verificarCaptcha() {
+  const input = document.getElementById('captcha-input');
+  const err = document.getElementById('captcha-error');
+  const btnConfirmar = document.getElementById('btn-borrar-confirmar');
+  if (!input || !err || !btnConfirmar) return;
+
+  const valor = parseInt(input.value.trim(), 10);
+
+  if (isNaN(valor)) {
+    btnConfirmar.disabled = true;
+    return;
+  }
+
+  if (valor === captchaResultado) {
+    btnConfirmar.disabled = false;
+    err.hidden = true;
+  } else {
+    btnConfirmar.disabled = true;
+    err.hidden = true; // no mostramos error hasta que apriete "borrar"
+  }
+}
+
+function confirmarBorrarTodo() {
+  const input = document.getElementById('captcha-input');
+  const err = document.getElementById('captcha-error');
+  if (!input || !err) return;
+
+  const valor = parseInt(input.value.trim(), 10);
+
+  if (valor !== captchaResultado) {
+    err.textContent = 'El resultado no es correcto. Probá de nuevo.';
+    err.hidden = false;
+
+    // Regenerar captcha para evitar fuerza bruta
+    generarCaptcha();
+    setTimeout(() => document.getElementById('captcha-input')?.focus(), 50);
+    return;
+  }
+
+  // Confirmación OK → borrar todo
+  setReservas([]);
+
+  cerrarModal('modal-borrar-todo');
+  renderTodo();
+
+  // Feedback
+  window.alert('Se borraron todos los turnos.');
+}
+
+function initBorrarTodo() {
+  const btnAbrir = document.getElementById('btn-borrar-todo');
+  const btnSiguiente = document.getElementById('btn-borrar-siguiente');
+  const btnVolver = document.getElementById('btn-borrar-volver');
+  const btnConfirmar = document.getElementById('btn-borrar-confirmar');
+  const inputCaptcha = document.getElementById('captcha-input');
+
+  if (btnAbrir) {
+    btnAbrir.addEventListener('click', abrirBorrarTodo);
+  }
+
+  if (btnSiguiente) {
+    btnSiguiente.addEventListener('click', irAPasoBorrar);
+  }
+
+  if (btnVolver) {
+    btnVolver.addEventListener('click', volverAPaso1Borrar);
+  }
+
+  if (btnConfirmar) {
+    btnConfirmar.addEventListener('click', confirmarBorrarTodo);
+  }
+
+  if (inputCaptcha) {
+    inputCaptcha.addEventListener('input', verificarCaptcha);
+    inputCaptcha.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        const btn = document.getElementById('btn-borrar-confirmar');
+        if (btn && !btn.disabled) confirmarBorrarTodo();
+      }
+    });
+  }
+}
+
+/* ───────────────────────────────────────────────────────────
    EXPORTAR CSV
    ─────────────────────────────────────────────────────────── */
 function escaparCSV(valor) {
@@ -644,6 +799,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initFiltroServicio();
   initModales();
   initBotones();
+  initBorrarTodo();
   initYear();
 
   renderTodo();
