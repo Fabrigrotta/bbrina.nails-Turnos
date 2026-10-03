@@ -45,6 +45,10 @@ const CONFIG = {
   storageKey: 'bbrina.turnos.reservas.v1'
 };
 
+/* Exponer CONFIG a nivel global para que admin.js (u otros scripts)
+   puedan leerlo sin duplicar datos. Se accede como window.BBRINA_CONFIG. */
+window.BBRINA_CONFIG = CONFIG;
+
 /* ───────────────────────────────────────────────────────────
    ESTADO
    ─────────────────────────────────────────────────────────── */
@@ -180,6 +184,14 @@ function renderServicios() {
 }
 
 function seleccionarServicio(id) {
+  // Si el usuario cambia de servicio, ya no está editando:
+  // limpiamos el código y la reserva en edición.
+  // (Salvo que sea el mismo servicio que ya tenía precargado.)
+  if (state.reservaEnEdicion && state.reservaEnEdicion.servicio !== id) {
+    state.codigoEnEdicion = null;
+    state.reservaEnEdicion = null;
+  }
+
   state.servicioSeleccionado = id;
   ocultarError();
 
@@ -742,7 +754,20 @@ function initFormulario() {
   const btnPrev = $('#btn-wizard-prev');
   if (btnPrev) {
     btnPrev.addEventListener('click', () => {
-      if (pasoActual > 1) irAPaso(pasoActual - 1);
+      if (pasoActual > 1) {
+        // Si el usuario vuelve al paso 1, ya no está editando:
+        // limpiamos la reserva en edición (así si confirma,
+        // se crea una nueva en vez de reemplazar la original).
+        if (pasoActual === 2) {
+          // Solo limpiamos si vuelve al paso 1 desde el 2.
+          // Si vuelve del 3 al 2, seguimos en modo edición.
+        }
+        if (pasoActual - 1 === 1) {
+          state.codigoEnEdicion = null;
+          state.reservaEnEdicion = null;
+        }
+        irAPaso(pasoActual - 1);
+      }
     });
   }
 
@@ -1063,6 +1088,12 @@ function initCopiarCodigo() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+  // Solo inicializamos la home si estamos en index.html
+  // (en admin.html no existen estos elementos, y no queremos
+  // que se ejecute nada del flujo de reserva).
+  const esHome = !!document.querySelector('#form-turno');
+  if (!esHome) return;
+
   renderServicios();
   initCalendario();
   renderHorarios();

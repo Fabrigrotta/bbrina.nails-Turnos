@@ -6,7 +6,9 @@
 /* ───────────────────────────────────────────────────────────
    CONFIG · misma config que script.js (debe estar sincronizada)
    ─────────────────────────────────────────────────────────── */
-const CONFIG = {
+/* El CONFIG se lee desde window.BBRINA_CONFIG (definido en script.js).
+   Fallback: si por alguna razón no está cargado, se usa un default mínimo. */
+const CONFIG = window.BBRINA_CONFIG || {
   whatsapp: '5491100000000',
   servicios: [
     { id: 'kapping',        nombre: 'Kapping',              duracion: 90,  precio: '$—' },
@@ -19,7 +21,11 @@ const CONFIG = {
   horarios: ['09:00', '10:30', '12:00', '14:00', '15:30', '17:00', '18:30'],
   diasNoLaborables: [0],
   marca: 'bbrina.nails',
-  storageKey: 'bbrina.turnos.reservas.v1',
+  storageKey: 'bbrina.turnos.reservas.v1'
+};
+
+/* Extensiones propias de admin que NO vienen en el CONFIG público */
+const ADMIN_CONFIG = {
   authKey: 'bbrina.admin.auth.v1',
   loginUrl: 'index.html#login'
 };
@@ -98,12 +104,11 @@ function horarioOcupado(fechaISO, horario, ignorarCodigo = null) {
    ─────────────────────────────────────────────────────────── */
 
 function estaLogueado() {
-  return sessionStorage.getItem(CONFIG.authKey) === '1';
+  return sessionStorage.getItem(ADMIN_CONFIG.authKey) === '1';
 }
 
 function cerrarSesion() {
-  sessionStorage.removeItem(CONFIG.authKey);
-  // Redirigimos reemplazando el historial para que no se pueda volver con "atrás"
+  sessionStorage.removeItem(ADMIN_CONFIG.authKey);
   window.location.replace('index.html');
 }
 
@@ -790,7 +795,7 @@ function initYear() {
 document.addEventListener('DOMContentLoaded', () => {
   // Guard de sesión: si no está logueado, redirige al index con el modal abierto
   if (!estaLogueado()) {
-    window.location.href = CONFIG.loginUrl;
+    window.location.href = ADMIN_CONFIG.loginUrl;
     return;
   }
 

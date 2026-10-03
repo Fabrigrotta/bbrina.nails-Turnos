@@ -20,13 +20,13 @@
   --dorado:   #c9a86a;
   --dorado-soft: #e6d3a8;
 
-  --texto:    #3b2a30;
-  --texto-soft: #7a5f68;
+  --texto: #2e1f24;
+  --texto-soft: #634a52;
   --blanco:   #ffffff;
 
-  --sombra-sm: 0 2px 8px rgba(140, 74, 93, 0.06);
-  --sombra-md: 0 8px 24px rgba(140, 74, 93, 0.08);
-  --sombra-lg: 0 20px 50px rgba(140, 74, 93, 0.12);
+  --sombra-sm: 0 2px 8px rgba(90, 45, 60, 0.10);
+  --sombra-md: 0 10px 30px rgba(90, 45, 60, 0.13);
+  --sombra-lg: 0 22px 55px rgba(90, 45, 60, 0.18);
 
   --radius-sm: 10px;
   --radius-md: 16px;
@@ -451,10 +451,11 @@ button { font-family: inherit; }
 
 .section-header h2 {
   font-family: var(--fuente-titulo);
-  font-size: clamp(1.8rem, 3.5vw, 2.4rem);
-  font-weight: 600;
+  font-size: clamp(2rem, 4vw, 2.7rem);
+  font-weight: 700;
   color: var(--rosa-700);
-  margin: 0 0 12px;
+  margin: 0 0 14px;
+  letter-spacing: -0.01em;
 }
 
 /* Jerarquía especial: "Reservar" es la acción principal del sitio.
@@ -481,7 +482,9 @@ button { font-family: inherit; }
   border-radius: var(--radius-lg);
   box-shadow: var(--sombra-md);
   padding: 32px;
-  border: 1px solid var(--rosa-100);
+  border: 1px solid rgba(189, 88, 120, 0.12);
+  /* Borde superior de acento: le da "volumen" a la card */
+  border-top: 3px solid rgba(189, 88, 120, 0.35);
 }
 
 /* ── Form ── */
@@ -628,10 +631,12 @@ button { font-family: inherit; }
 
 .servicio-item .servicio-nombre {
   display: block;
-  font-weight: 600;
-  font-size: 0.95rem;
+  font-weight: 700;
+  font-size: 1rem;
   color: var(--rosa-700);
-  margin-bottom: 4px;
+  margin-bottom: 6px;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
 }
 
 .servicio-item .servicio-meta {
@@ -783,13 +788,13 @@ button { font-family: inherit; }
 
 .calendario-dia {
   position: relative;
-  aspect-ratio: 1 / 1;
-  border: none;
+  aspect-ratio: 1.5 / 1;
+  border: 1px solid transparent;
   background: transparent;
   border-radius: var(--radius-sm);
   font-family: inherit;
-  font-size: 0.9rem;
-  font-weight: 500;
+  font-size: 0.95rem;
+  font-weight: 600;
   color: var(--texto);
   cursor: pointer;
   display: flex;
@@ -798,7 +803,17 @@ button { font-family: inherit; }
   justify-content: center;
   gap: 3px;
   padding: 4px;
-  transition: background 0.2s ease;
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.calendario-dia:not(:disabled):not(.vacio) {
+  background: rgba(251, 233, 238, 0.5);
+  border-color: rgba(189, 88, 120, 0.12);
+}
+
+.calendario-dia:not(:disabled):not(.vacio):hover {
+  background: var(--rosa-100);
+  border-color: var(--rosa-300);
 }
 
 .calendario-dia:hover:not(:disabled) {
@@ -850,9 +865,14 @@ button { font-family: inherit; }
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, var(--rosa-500), var(--rosa-700));
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(135deg, #a84062, #6b2e42);
   color: var(--blanco);
-  box-shadow: var(--sombra-md);
+  box-shadow:
+    0 6px 16px rgba(107, 46, 66, 0.25),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(107, 46, 66, 0.4);
 }
 
 .btn-primary:hover {
