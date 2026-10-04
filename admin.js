@@ -60,9 +60,24 @@ async function cargarReservas() {
   }
 }
 
+/* Caché de bloqueos */
+let bloqueosCache = [];
+
+async function cargarBloqueos() {
+  try {
+    const data = await window.SB.getBloqueos();
+    bloqueosCache = data || [];
+    console.log('[admin] Bloqueos cargados desde Supabase:', bloqueosCache.length);
+  } catch (err) {
+    console.error('[admin] Error al cargar bloqueos:', err);
+    bloqueosCache = [];
+  }
+}
+
 /* ───────────────────────────────────────────────────────────
    HELPERS
    ─────────────────────────────────────────────────────────── */
+
 const $  = (sel) => document.querySelector(sel);
 const $$ = (sel) => document.querySelectorAll(sel);
 
@@ -433,6 +448,101 @@ function renderTodo() {
 }
 
 /* ───────────────────────────────────────────────────────────
+   RENDER · BLOQUEOS
+   ─────────────────────────────────────────────────────────── */
+function crearCardBloqueo(bloqueo) {
+  const card = document.createElement('article');
+  card.className = 'admin-bloqueo-card';
+  if (bloqueo.tipo === 'completo') {
+    card.classList.add('admin-bloqueo-card-completo');
+  }
+
+  // Header: fecha + badge
+  const header = document.createElement('div');
+  header.className = 'admin-bloqueo-header';
+
+  const fecha = document.createElement('span');
+  fecha.className = 'admin-bloqueo-fecha';
+  fecha.textContent = formatearFecha(bloqueo.fecha);
+
+  const badge = document.createElement('span');
+  badge.className = 'admin-bloqueo-badge';
+  if (bloqueo.tipo === 'completo') {
+    badge.classList.add('admin-bloqueo-badge-completo');
+    badge.textContent = 'Día completo';
+  } else {
+    badge.classList.add('admin-bloqueo-badge-parcial');
+    badge.textContent = 'Parcial';
+  }
+
+  header.appendChild(fecha);
+  header.appendChild(badge);
+  card.appendChild(header);
+
+  // Horarios
+  if (Array.isArray(bloqueo.horarios) && bloqueo.horarios.length > 0) {
+    const horarios = document.createElement('div');
+    horarios.className = 'admin-bloqueo-horarios';
+    bloqueo.horarios.forEach(h => {
+      const chip = document.createElement('span');
+      chip.className = 'admin-bloqueo-horario';
+      chip.textContent = h;
+      horarios.appendChild(chip);
+    });
+    card.appendChild(horarios);
+  }
+
+  // Nota
+  if (bloqueo.nota) {
+    const nota = document.createElement('p');
+    nota.className = 'admin-bloqueo-nota';
+    nota.textContent = `"${bloqueo.nota}"`;
+    card.appendChild(nota);
+  }
+
+  // Botón eliminar
+  const acciones = document.createElement('div');
+  acciones.className = 'admin-bloqueo-acciones';
+
+  const btnEliminar = document.createElement('button');
+  btnEliminar.type = 'button';
+  btnEliminar.className = 'btn btn-secondary admin-btn-sm admin-btn-danger';
+  btnEliminar.textContent = 'Eliminar bloqueo';
+  btnEliminar.addEventListener('click', () => eliminarBloqueo(bloqueo));
+
+  acciones.appendChild(btnEliminar);
+  card.appendChild(acciones);
+
+  return card;
+}
+
+function renderBloqueos() {
+  const cont = document.getElementById('admin-lista-bloqueos');
+  const vacio = document.getElementById('admin-vacio-bloqueos');
+  const contador = document.getElementById('admin-contador-bloqueos');
+  if (!cont) return;
+
+  cont.innerHTML = '';
+
+  if (!bloqueosCache.length) {
+    if (vacio) vacio.hidden = false;
+    if (contador) contador.textContent = '0 bloqueos';
+    return;
+  }
+
+  if (vacio) vacio.hidden = true;
+  if (contador) contador.textContent = `${bloqueosCache.length} ${bloqueosCache.length === 1 ? 'bloqueo' : 'bloqueos'}`;
+
+  // Ordenar por fecha ascendente
+  const ordenados = [...bloqueosCache].sort((a, b) => {
+    if (a.fecha !== b.fecha) return a.fecha < b.fecha ? -1 : 1;
+    return 0;
+  });
+
+  ordenados.forEach(b => cont.appendChild(crearCardBloqueo(b)));
+}
+
+/* ───────────────────────────────────────────────────────────
    MODALES · helpers
    ─────────────────────────────────────────────────────────── */
 function abrirModal(id) {
@@ -614,6 +724,346 @@ function confirmarCancelar() {
   state.reservaCancelando = null;
   cerrarModal('modal-cancelar');
   renderTodo();
+}
+
+/* ───────────────────────────────────────────────────────────
+   BLOQUEAR HORARIOS · modal
+   ─────────────────────────────────────────────────────────── */
+
+function poblarCheckboxesHorarios() {
+  const cont = document.getElementById('bloquear-horarios-grid');
+  if (!cont) return;
+
+  cont.innerHTML = '';
+
+  CFG.horarios.forEach(hora => {
+    const label = document.createElement('label');
+    label.className = 'bloquear-checkbox';
+
+    const input = document.createElement('input');
+    input.type = 'checkbox';
+    input.value = hora;
+
+    const span = document.createElement('span');
+    span.textContent = hora;
+
+    label.appendChild(input);
+    label.appendChild(span);
+    cont.appendChild(label);
+  });
+}
+
+function abrirModalBloquear() {
+  const modal = document.getElementById('modal-bloquear');
+  if (!modal) return;
+
+  // Refrescar bloqueos desde Supabase antes de abrir
+  // (para evitar duplicados si se crearon en otra pestaña)
+  window.SB.getBloqueos().then(data => {
+    if (Array.isArray(data)) bloqueosCache = data;
+    _abrirModalBloquearAhora();
+  }).catch(err => {
+    console.warn('[admin] No se pudo refrescar bloqueos:', err);
+    _abrirModalBloquearAhora();
+  });
+}
+
+function _abrirModalBloquearAhora() {
+  const modal = document.getElementById('modal-bloquear');
+  if (!modal) return;
+
+  // Resetear
+  const inputFecha = document.getElementById('bloquear-fecha');
+  const inputNota = document.getElementById('bloquear-nota');
+  const err = document.getElementById('bloquear-error');
+
+  if (inputFecha) {
+    inputFecha.min = getFechaISO();
+    inputFecha.value = getFechaISO();
+  }
+  if (inputNota) inputNota.value = '';
+  if (err) err.hidden = true;
+
+  poblarCheckboxesHorarios();
+
+  // Al cambiar la fecha, actualizar los checkboxes y la nota
+  // según si ya existe un bloqueo para esa fecha.
+  if (inputFecha) {
+    // Removemos listener previo (por si lo abren varias veces)
+    inputFecha.onchange = null;
+    inputFecha.onchange = () => cargarBloqueoExistente(inputFecha.value);
+    // Cargar el de hoy (o el que esté por defecto)
+    cargarBloqueoExistente(inputFecha.value);
+  }
+
+  // Refrescar caché mientras el modal está abierto
+  // (para que cargarBloqueoExistente use datos frescos)
+  window.SB.getBloqueos().then(data => {
+    if (Array.isArray(data)) {
+      bloqueosCache = data;
+      // Re-evaluar el bloqueo existente con datos frescos
+      if (inputFecha) cargarBloqueoExistente(inputFecha.value);
+    }
+  }).catch(e => console.warn('[admin] No se pudo refrescar bloqueos:', e));
+
+  abrirModal('modal-bloquear');
+}
+
+/* Si hay un bloqueo para esa fecha, pre-carga los checkboxes y la nota.
+   Si no, limpia todo. */
+function cargarBloqueoExistente(fecha) {
+  const inputNota = document.getElementById('bloquear-nota');
+  const checkboxes = document.querySelectorAll('#bloquear-horarios-grid input[type="checkbox"]');
+
+  // Buscar TODOS los bloqueos para esa fecha (puede haber duplicados)
+  const existentes = bloqueosCache.filter(b => b.fecha === fecha);
+
+  if (existentes.length > 0) {
+    // Combinar los horarios de TODOS los bloqueos de esa fecha
+    const horariosBloqueados = new Set();
+    existentes.forEach(b => {
+      (b.horarios || []).forEach(h => horariosBloqueados.add(h));
+    });
+
+    // Pre-marcar los horarios
+    checkboxes.forEach(cb => {
+      cb.checked = horariosBloqueados.has(cb.value);
+    });
+
+    // Cargar la nota del primero que tenga nota
+    const conNota = existentes.find(b => b.nota);
+    if (inputNota) inputNota.value = conNota ? conNota.nota : '';
+  } else {
+    // Limpiar todo
+    checkboxes.forEach(cb => { cb.checked = false; });
+    if (inputNota) inputNota.value = '';
+  }
+
+  // Actualizar el título del modal
+  actualizarTituloModalBloqueo(existentes.length > 0 ? existentes[0] : null);
+}
+
+function actualizarTituloModalBloqueo(bloqueoExistente) {
+  const titulo = document.querySelector('#modal-bloquear .modal-titulo');
+  const subtitulo = document.querySelector('#modal-bloquear .modal-subtitulo');
+
+  if (titulo) {
+    titulo.textContent = bloqueoExistente ? 'Editar bloqueo' : 'Bloquear horarios';
+  }
+  if (subtitulo) {
+    subtitulo.textContent = bloqueoExistente
+      ? `Ya hay un bloqueo el ${formatearFecha(bloqueoExistente.fecha)}. Modificalo o eliminalo.`
+      : 'Elegí una fecha y qué horarios bloquear.';
+  }
+}
+
+function toggleTodosLosHorarios(checked) {
+  const checkboxes = document.querySelectorAll('#bloquear-horarios-grid input[type="checkbox"]');
+  checkboxes.forEach(cb => { cb.checked = checked; });
+}
+
+function limpiarSeleccionHorarios() {
+  const checkboxes = document.querySelectorAll('#bloquear-horarios-grid input[type="checkbox"]');
+  checkboxes.forEach(cb => { cb.checked = false; });
+}
+
+async function confirmarBloqueo() {
+  const fecha = document.getElementById('bloquear-fecha')?.value || '';
+  const nota = document.getElementById('bloquear-nota')?.value.trim() || '';
+  const err = document.getElementById('bloquear-error');
+
+  if (!fecha) {
+    if (err) { err.textContent = 'Elegí una fecha.'; err.hidden = false; }
+    return;
+  }
+
+  // Recolectar horarios seleccionados
+  const checkboxes = document.querySelectorAll('#bloquear-horarios-grid input[type="checkbox"]:checked');
+  const horarios = Array.from(checkboxes).map(cb => cb.value);
+
+  // Feedback visual
+  const btn = document.getElementById('btn-confirmar-bloqueo');
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = 'Guardando...';
+  }
+
+  // Refrescar bloqueos desde Supabase antes de operar
+  // (por si se crearon desde otra pestaña o el caché está desactualizado)
+  try {
+    const bloqueosFrescos = await window.SB.getBloqueos();
+    if (Array.isArray(bloqueosFrescos)) {
+      bloqueosCache = bloqueosFrescos;
+    }
+  } catch (e) {
+    console.warn('[admin] No se pudo refrescar bloqueos:', e);
+  }
+
+  // Buscar TODOS los bloqueos de esa fecha (puede haber duplicados)
+  const existentes = bloqueosCache.filter(b => b.fecha === fecha);
+
+  // CASO 1: sin horarios y existen bloqueos → BORRAR TODOS
+  if (!horarios.length && existentes.length > 0) {
+    // Borrar todos los bloqueos de esa fecha (por las dudas haya duplicados)
+    const resultados = await Promise.all(
+      existentes.map(b => window.SB.borrarBloqueo(b.id))
+    );
+
+    const todosOk = resultados.every(r => r === true);
+
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = 'Guardar bloqueo';
+    }
+
+    if (!todosOk) {
+      if (err) { err.textContent = 'Error al eliminar alguno. Intentá de nuevo.'; err.hidden = false; }
+      return;
+    }
+
+    bloqueosCache = bloqueosCache.filter(b => b.fecha !== fecha);
+    cerrarModal('modal-bloquear');
+    renderBloqueos();
+
+    mostrarAviso({
+      titulo: '🔓 Desbloqueo exitoso',
+      texto: `Se liberaron todos los horarios del ${formatearFecha(fecha)}.`,
+      tipo: 'success'
+    });
+    return;
+  }
+
+  // CASO 2: sin horarios y NO existe bloqueo → simplemente no hacer nada
+  // (el usuario deseleccionó todo en un día que no tenía bloqueo,
+  // no hay nada que guardar ni borrar)
+  if (!horarios.length) {
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = 'Guardar bloqueo';
+    }
+    cerrarModal('modal-bloquear');
+    return;
+  }
+
+  // CASO 3: con horarios → crear o actualizar
+  const tipo = horarios.length === CFG.horarios.length ? 'completo' : 'parcial';
+
+  let result;
+  let accion;
+
+  if (existentes.length > 0) {
+    // Si hay duplicados, primero eliminamos todos los que sobren
+    // (nos quedamos con el primero para actualizarlo)
+    const principal = existentes[0];
+    const duplicados = existentes.slice(1);
+
+    if (duplicados.length > 0) {
+      // Borrar los duplicados en paralelo
+      await Promise.all(duplicados.map(b => window.SB.borrarBloqueo(b.id)));
+      // Quitarlos del caché
+      const idsDuplicados = new Set(duplicados.map(b => b.id));
+      bloqueosCache = bloqueosCache.filter(b => !idsDuplicados.has(b.id));
+    }
+
+    // Actualizar el principal
+    result = await window.SB.actualizarBloqueo(principal.id, {
+      horarios,
+      tipo,
+      nota
+    });
+    accion = 'actualizado';
+
+    if (result) {
+      const idx = bloqueosCache.findIndex(b => b.id === principal.id);
+      if (idx >= 0) bloqueosCache[idx] = result;
+    }
+  } else {
+    // Crear nuevo
+    result = await window.SB.crearBloqueo({
+      fecha,
+      horarios,
+      tipo,
+      nota
+    });
+    accion = 'creado';
+
+    if (result) {
+      bloqueosCache.push(result);
+    }
+  }
+
+  if (btn) {
+    btn.disabled = false;
+    btn.textContent = 'Guardar bloqueo';
+  }
+
+  if (!result) {
+    if (err) { err.textContent = 'Error al guardar. Intentá de nuevo.'; err.hidden = false; }
+    return;
+  }
+
+  cerrarModal('modal-bloquear');
+  renderBloqueos();
+
+  const verbo = accion === 'actualizado' ? 'actualizó' : 'bloqueó';
+  const icono = accion === 'actualizado' ? '✏️' : '🔒';
+  const cantidad = horarios.length === CFG.horarios.length
+    ? 'todo el día'
+    : `${horarios.length} ${horarios.length === 1 ? 'horario' : 'horarios'}`;
+
+  mostrarAviso({
+    titulo: `${icono} ${accion === 'actualizado' ? 'Bloqueo actualizado' : 'Bloqueo creado'}`,
+    texto: `Se ${verbo} ${cantidad} del ${formatearFecha(fecha)} con éxito.`,
+    tipo: 'success'
+  });
+}
+async function eliminarBloqueo(bloqueo) {
+  const ok = window.confirm(`¿Eliminar el bloqueo del ${formatearFecha(bloqueo.fecha)}?`);
+  if (!ok) return;
+
+  const result = await window.SB.borrarBloqueo(bloqueo.id);
+
+  if (!result) {
+    mostrarAviso({
+      titulo: 'Error',
+      texto: 'No se pudo eliminar el bloqueo.',
+      tipo: 'danger'
+    });
+    return;
+  }
+
+  // Actualizar caché
+  bloqueosCache = bloqueosCache.filter(b => b.id !== bloqueo.id);
+  renderBloqueos();
+
+  mostrarAviso({
+    titulo: 'Bloqueo eliminado',
+    texto: `Se liberó el bloqueo del ${formatearFecha(bloqueo.fecha)}.`,
+    tipo: 'success'
+  });
+}
+
+function initBloqueos() {
+  const btnAbrir = document.getElementById('btn-bloquear-horarios');
+  const btnTodoDia = document.getElementById('btn-bloquear-todo-dia');
+  const btnLimpiar = document.getElementById('btn-bloquear-limpiar');
+  const btnConfirmar = document.getElementById('btn-confirmar-bloqueo');
+
+  if (btnAbrir) {
+    btnAbrir.addEventListener('click', abrirModalBloquear);
+  }
+
+  if (btnTodoDia) {
+    btnTodoDia.addEventListener('click', () => toggleTodosLosHorarios(true));
+  }
+
+  if (btnLimpiar) {
+    btnLimpiar.addEventListener('click', limpiarSeleccionHorarios);
+  }
+
+  if (btnConfirmar) {
+    btnConfirmar.addEventListener('click', confirmarBloqueo);
+  }
 }
 
 /* ───────────────────────────────────────────────────────────
@@ -915,8 +1365,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     return;
   }
 
-  // Cargar reservas desde Supabase ANTES de inicializar
+  // Cargar reservas Y bloqueos desde Supabase ANTES de inicializar
   await cargarReservas();
+  await cargarBloqueos();
 
   initLogout();
   initFiltros();
@@ -924,9 +1375,11 @@ document.addEventListener('DOMContentLoaded', async () => {
   initModales();
   initBotones();
   initBorrarTodo();
+  initBloqueos();
   initYear();
 
   renderTodo();
+  renderBloqueos();
 });
 
 })();  // ← cierre del IIFE

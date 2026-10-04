@@ -162,14 +162,116 @@ async function subirComprobanteSB(file) {
 }
 
 /* ───────────────────────────────────────────────────────────
+   BLOQUEOS DE HORARIOS
+   ─────────────────────────────────────────────────────────── */
+
+/* Devuelve todos los bloqueos.
+   Uso: const bloqueos = await getBloqueosSB(); */
+async function getBloqueosSB() {
+  const { data, error } = await supabaseClient
+    .from('bloqueos')
+    .select('*')
+    .order('fecha', { ascending: true });
+
+  if (error) {
+    console.error('[Supabase] Error al leer bloqueos:', error);
+    return [];
+  }
+
+  return data || [];
+}
+
+/* Crea un bloqueo nuevo.
+   Uso: await crearBloqueoSB({ fecha, horarios, tipo, nota }); */
+async function crearBloqueoSB(bloqueo) {
+  const { data, error } = await supabaseClient
+    .from('bloqueos')
+    .insert({
+      fecha: bloqueo.fecha,
+      horarios: bloqueo.horarios || [],
+      tipo: bloqueo.tipo || 'parcial',
+      nota: bloqueo.nota || null
+    })
+    .select()
+    .single();
+
+  if (error) {
+    console.error('[Supabase] Error al crear bloqueo:', error);
+    return null;
+  }
+
+  return data;
+}
+
+/* Actualiza un bloqueo por id.
+   Uso: await actualizarBloqueoSB(1, { horarios: [...], tipo: 'completo' }); */
+async function actualizarBloqueoSB(id, cambios) {
+  const { data, error } = await supabaseClient
+    .from('bloqueos')
+    .update(cambios)
+    .eq('id', id)
+    .select()
+    .single();
+
+  if (error) {
+    console.error('[Supabase] Error al actualizar bloqueo:', error);
+    return null;
+  }
+
+  return data;
+}
+
+/* Borra un bloqueo por id.
+   Uso: await borrarBloqueoSB(1); */
+async function borrarBloqueoSB(id) {
+  const { error } = await supabaseClient
+    .from('bloqueos')
+    .delete()
+    .eq('id', id);
+
+  if (error) {
+    console.error('[Supabase] Error al borrar bloqueo:', error);
+    return false;
+  }
+
+  return true;
+}
+
+/* Borra TODOS los bloqueos.
+   Uso: await borrarTodosLosBloqueosSB(); */
+async function borrarTodosLosBloqueosSB() {
+  const { error } = await supabaseClient
+    .from('bloqueos')
+    .delete()
+    .neq('id', 0);
+
+  if (error) {
+    console.error('[Supabase] Error al borrar todos los bloqueos:', error);
+    return false;
+  }
+
+  return true;
+}
+
+/* ───────────────────────────────────────────────────────────
    EXPONER AL SCOPE GLOBAL
    ─────────────────────────────────────────────────────────── */
 window.SB = {
+  // Reservas
   getReservas: getReservasSB,
   guardarReserva: guardarReservaSB,
   actualizarReserva: actualizarReservaSB,
   borrarReserva: borrarReservaSB,
   borrarTodasLasReservas: borrarTodasLasReservasSB,
   buscarReservas: buscarReservasSB,
-  subirComprobante: subirComprobanteSB
+
+  // Comprobantes
+  subirComprobante: subirComprobanteSB,
+
+  // Bloqueos
+  getBloqueos: getBloqueosSB,
+  crearBloqueo: crearBloqueoSB,
+  actualizarBloqueo: actualizarBloqueoSB,
+  borrarBloqueo: borrarBloqueoSB,
+  borrarTodosLosBloqueos: borrarTodosLosBloqueosSB
 };

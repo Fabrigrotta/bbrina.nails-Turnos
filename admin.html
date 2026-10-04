@@ -74,6 +74,9 @@
           <h3 class="admin-bloque-titulo">Todos los turnos</h3>
           <div class="admin-bloque-acciones">
             <span class="admin-bloque-contador" id="admin-contador">— reservas</span>
+            <button type="button" id="btn-bloquear-horarios" class="btn btn-secondary admin-btn-sm">
+              Bloquear horarios
+            </button>
             <button type="button" id="btn-exportar-csv" class="btn btn-secondary admin-btn-sm">
               Exportar CSV
             </button>
@@ -104,6 +107,20 @@
         </div>
 
         <p id="admin-vacio" class="admin-vacio" hidden>No hay reservas para mostrar.</p>
+      </section>
+
+      <!-- ── Bloque 3: Horarios bloqueados ── -->
+      <section class="admin-bloque">
+        <header class="admin-bloque-header">
+          <h3 class="admin-bloque-titulo">Horarios bloqueados</h3>
+          <span class="admin-bloque-contador" id="admin-contador-bloqueos">— bloqueos</span>
+        </header>
+
+        <div id="admin-lista-bloqueos" class="admin-bloqueos-lista">
+          <!-- Render desde admin.js -->
+        </div>
+
+        <p id="admin-vacio-bloqueos" class="admin-vacio" hidden>No hay horarios bloqueados.</p>
       </section>
 
     </div>
@@ -272,6 +289,47 @@
 
       <div class="modal-acciones">
         <button type="button" class="btn btn-primary" data-close="modal-aviso">Entendido</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════ MODAL BLOQUEAR HORARIOS ═══════════════ -->
+  <div id="modal-bloquear" class="modal" hidden>
+    <div class="modal-backdrop" data-close="modal-bloquear"></div>
+    <div class="modal-card card">
+      <h3 class="modal-titulo">Bloquear horarios</h3>
+      <p class="modal-subtitulo">Elegí una fecha y qué horarios bloquear.</p>
+
+      <div class="field">
+        <label for="bloquear-fecha">Fecha</label>
+        <input type="date" id="bloquear-fecha" />
+      </div>
+
+      <div class="field">
+        <label>Horarios a bloquear</label>
+        <div class="bloquear-horarios-grid" id="bloquear-horarios-grid">
+          <!-- Se puebla desde admin.js -->
+        </div>
+        <div class="bloquear-acciones">
+          <button type="button" class="btn btn-secondary admin-btn-sm" id="btn-bloquear-todo-dia">
+            Bloquear todo el día
+          </button>
+          <button type="button" class="btn btn-secondary admin-btn-sm" id="btn-bloquear-limpiar">
+            Limpiar selección
+          </button>
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="bloquear-nota">Nota (opcional)</label>
+        <input type="text" id="bloquear-nota" placeholder="Ej: Vacaciones, feriado, etc." />
+      </div>
+
+      <p id="bloquear-error" class="form-error" role="alert" hidden></p>
+
+      <div class="modal-acciones">
+        <button type="button" class="btn btn-secondary" data-close="modal-bloquear">Cancelar</button>
+        <button type="button" class="btn btn-primary" id="btn-confirmar-bloqueo">Guardar bloqueo</button>
       </div>
     </div>
   </div>

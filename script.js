@@ -79,6 +79,20 @@ async function cargarReservas() {
   }
 }
 
+/* Caché de bloqueos · se llena desde Supabase al cargar la página */
+let bloqueosCache = [];
+
+async function cargarBloqueos() {
+  try {
+    const data = await window.SB.getBloqueos();
+    bloqueosCache = data || [];
+    console.log('[Cache] Bloqueos cargados desde Supabase:', bloqueosCache.length);
+  } catch (err) {
+    console.error('[Cache] Error al cargar bloqueos:', err);
+    bloqueosCache = [];
+  }
+}
+
 /* ───────────────────────────────────────────────────────────
    HELPERS
    ─────────────────────────────────────────────────────────── */
@@ -163,6 +177,21 @@ function horarioOcupado(fechaISO, horario) {
   });
 }
 
+function horarioBloqueado(fechaISO, horario) {
+  // Devuelve true si el horario está bloqueado por la manicura.
+  // Los bloqueos tienen: { fecha, horarios: [...], tipo: 'parcial'|'completo' }
+  return bloqueosCache.some(b =>
+    b.fecha === fechaISO &&
+    Array.isArray(b.horarios) &&
+    b.horarios.includes(horario)
+  );
+}
+
+/* Un horario está disponible si NO está reservado Y NO está bloqueado */
+function horarioNoDisponible(fechaISO, horario) {
+  return horarioOcupado(fechaISO, horario) || horarioBloqueado(fechaISO, horario);
+}
+
 function mostrarError(msg) {
   const el = $('#form-error');
   if (!el) return;
@@ -244,16 +273,23 @@ function renderHorarios() {
   grid.innerHTML = '';
 
   CONFIG.horarios.forEach(hora => {
-    const ocupado = horarioOcupado(state.fechaSeleccionada, hora);
+    const reservado = horarioOcupado(state.fechaSeleccionada, hora);
+    const bloqueado = horarioBloqueado(state.fechaSeleccionada, hora);
+    const noDisponible = reservado || bloqueado;
 
     const btn = document.createElement('button');
     btn.type = 'button';
     btn.className = 'horario-item';
     btn.textContent = hora;
-    btn.disabled = ocupado;
-    if (ocupado) btn.title = 'Ya reservado';
+    btn.disabled = noDisponible;
 
-    if (state.horarioSeleccionado === hora && !ocupado) {
+    if (reservado) {
+      btn.title = 'Ya reservado';
+    } else if (bloqueado) {
+      btn.title = 'No disponible';
+    }
+
+    if (state.horarioSeleccionado === hora && !noDisponible) {
       btn.classList.add('selected');
     }
 
@@ -287,7 +323,7 @@ let mesVisible = (() => {
 })();
 
 function contarLibres(fechaISO) {
-  return CONFIG.horarios.filter(h => !horarioOcupado(fechaISO, h)).length;
+  return CONFIG.horarios.filter(h => !horarioNoDisponible(fechaISO, h)).length;
 }
 
 function colorDisponibilidad(fechaISO) {
@@ -458,6 +494,10 @@ function validarFormulario(datos) {
 
   if (horarioOcupado(datos.fecha, datos.horario)) {
     return 'Ese horario ya fue reservado, elegí otro.';
+  }
+
+  if (horarioBloqueado(datos.fecha, datos.horario)) {
+    return 'Ese horario no está disponible. Elegí otro.';
   }
 
   return null;
@@ -1256,8 +1296,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   const esHome = !!document.querySelector('#form-turno');
   if (!esHome) return;
 
-  // Cargamos las reservas desde Supabase ANTES de renderizar
+  // Cargamos reservas Y bloqueos desde Supabase ANTES de renderizar
   await cargarReservas();
+  await cargarBloqueos();
 
   renderServicios();
   initCalendario();

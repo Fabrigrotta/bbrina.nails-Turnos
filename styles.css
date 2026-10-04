@@ -3094,6 +3094,181 @@ button { font-family: inherit; }
 }
 
 /* ═══════════════════════════════════════════════════════════
+   BLOQUEOS DE HORARIOS
+   ═══════════════════════════════════════════════════════════ */
+
+/* Grid de checkboxes de horarios en el modal */
+.bloquear-horarios-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.bloquear-checkbox {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px 12px;
+  border: 1.5px solid var(--rosa-100);
+  border-radius: var(--radius-sm);
+  background: var(--rosa-50);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--texto);
+  user-select: none;
+}
+
+.bloquear-checkbox:hover {
+  border-color: var(--rosa-300);
+  background: var(--rosa-100);
+}
+
+.bloquear-checkbox input[type="checkbox"] {
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border: 2px solid var(--rosa-300);
+  border-radius: 4px;
+  margin: 0;
+  position: relative;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.bloquear-checkbox input[type="checkbox"]:checked {
+  background: linear-gradient(135deg, var(--rosa-500), var(--rosa-700));
+  border-color: var(--rosa-500);
+}
+
+.bloquear-checkbox input[type="checkbox"]:checked::after {
+  content: '✓';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: var(--blanco);
+  font-size: 0.7rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.bloquear-checkbox:has(input[type="checkbox"]:checked) {
+  border-color: var(--rosa-500);
+  background: var(--rosa-100);
+  color: var(--rosa-700);
+}
+
+/* Botones de acción rápida */
+.bloquear-acciones {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 12px;
+}
+
+/* Lista de bloqueos en el admin */
+.admin-bloqueos-lista {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 14px;
+}
+
+.admin-bloqueo-card {
+  background: var(--blanco);
+  border: 1px solid var(--rosa-100);
+  border-left: 3px solid var(--dorado);
+  border-radius: var(--radius-md);
+  padding: 16px 18px;
+  box-shadow: var(--sombra-sm);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.admin-bloqueo-card-completo {
+  border-left-color: var(--rosa-500);
+}
+
+.admin-bloqueo-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.admin-bloqueo-fecha {
+  font-family: var(--fuente-titulo);
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--rosa-700);
+  letter-spacing: -0.01em;
+}
+
+.admin-bloqueo-badge {
+  font-size: 0.65rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  font-weight: 700;
+  border-radius: var(--radius-full);
+  padding: 3px 10px;
+  border: 1px solid transparent;
+}
+
+.admin-bloqueo-badge-completo {
+  color: var(--blanco);
+  background: linear-gradient(135deg, var(--rosa-500), var(--rosa-700));
+  border-color: var(--rosa-500);
+}
+
+.admin-bloqueo-badge-parcial {
+  color: var(--dorado);
+  background: rgba(230, 211, 168, 0.25);
+  border-color: var(--dorado);
+}
+
+.admin-bloqueo-horarios {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.admin-bloqueo-horario {
+  display: inline-block;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--texto-soft);
+  background: var(--rosa-50);
+  border: 1px solid var(--rosa-100);
+  border-radius: var(--radius-sm);
+  padding: 3px 8px;
+}
+
+.admin-bloqueo-nota {
+  font-size: 0.85rem;
+  color: var(--texto-soft);
+  font-style: italic;
+  margin: 0;
+  line-height: 1.4;
+}
+
+.admin-bloqueo-acciones {
+  display: flex;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+@media (max-width: 480px) {
+  .admin-bloqueos-lista {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════
    ANIMACIONES
    ═══════════════════════════════════════════════════════════ */
 
