@@ -642,22 +642,28 @@ function resetFormulario() {
   renderCalendario();
   renderHorarios();
 
-  // Volver al paso 1
-  const wizardPasos = document.querySelectorAll('.wizard-paso');
-  wizardPasos.forEach(el => { el.hidden = el.dataset.paso !== '1'; });
+  // Volver al paso 1 usando la función interna del wizard
+  // (que resetea `pasoActual` y los botones correctamente)
+  if (typeof window.irAPasoDesdeEdicion === 'function') {
+    window.irAPasoDesdeEdicion(1);
+  } else {
+    // Fallback: si por alguna razón no está expuesta, hacemos la manipulación manual
+    const wizardPasos = document.querySelectorAll('.wizard-paso');
+    wizardPasos.forEach(el => { el.hidden = el.dataset.paso !== '1'; });
 
-  const wizardSteps = document.querySelectorAll('.wizard-step');
-  wizardSteps.forEach(el => {
-    el.classList.toggle('active', el.dataset.step === '1');
-    el.classList.remove('completed');
-  });
+    const wizardSteps = document.querySelectorAll('.wizard-step');
+    wizardSteps.forEach(el => {
+      el.classList.toggle('active', el.dataset.step === '1');
+      el.classList.remove('completed');
+    });
 
-  const btnPrev = document.querySelector('#btn-wizard-prev');
-  const btnNext = document.querySelector('#btn-wizard-next');
-  if (btnPrev) btnPrev.hidden = true;
-  if (btnNext) {
-    btnNext.textContent = 'Continuar';
-    btnNext.disabled = true;
+    const btnPrev = document.querySelector('#btn-wizard-prev');
+    const btnNext = document.querySelector('#btn-wizard-next');
+    if (btnPrev) btnPrev.hidden = true;
+    if (btnNext) {
+      btnNext.textContent = 'Continuar';
+      btnNext.disabled = true;
+    }
   }
 
   const reservar = document.querySelector('#reservar');
