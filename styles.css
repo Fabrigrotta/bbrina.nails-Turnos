@@ -27,7 +27,7 @@
   --sage-50:  #eef2e9;
 
   --texto: #2e1f24;
-  --texto-soft: #634a52;
+  --texto-soft: #5a4349;
   --blanco:   #ffffff;
 
   --sombra-sm: 0 2px 8px rgba(90, 45, 60, 0.10);
@@ -248,11 +248,12 @@ button { font-family: inherit; }
 
 .hero-title {
   font-family: var(--fuente-titulo);
-  font-size: clamp(2.4rem, 5vw, 3.8rem);
-  font-weight: 600;
+  font-size: clamp(3rem, 6vw, 5rem);
+  font-weight: 700;
   color: var(--rosa-700);
-  margin: 0 0 20px;
-  line-height: 1.1;
+  margin: 0 0 24px;
+  line-height: 1.05;
+  letter-spacing: -0.02em;
 }
 
 .hero-title em {
@@ -528,6 +529,14 @@ button { font-family: inherit; }
 /* ── Sections ── */
 .section { padding: 60px 0; }
 
+/* Ritmo visual: secciones importantes con más aire, secundarias con menos */
+.hero { padding: 100px 0 80px; }
+.consultar { padding: 40px 0 50px; }
+.reservar { padding: 80px 0 60px; }
+.info { padding: 40px 0; }
+.acerca { padding: 70px 0 60px; }
+.testimonios { padding: 60px 0 80px; }
+
 .section-header {
   text-align: center;
   max-width: 620px;
@@ -561,11 +570,12 @@ button { font-family: inherit; }
 
 .section-header h2 {
   font-family: var(--fuente-titulo);
-  font-size: clamp(2rem, 4vw, 2.7rem);
+  font-size: clamp(1.6rem, 3vw, 2.2rem);
   font-weight: 700;
   color: var(--rosa-700);
   margin: 0 0 14px;
   letter-spacing: -0.01em;
+  line-height: 1.15;
 }
 
 /* Palabras en itálica dentro del h2 → dorado, para acentos */
@@ -577,7 +587,7 @@ button { font-family: inherit; }
 /* Jerarquía especial: "Reservar" es la acción principal del sitio.
    Le damos más peso visual que al resto de las secciones. */
 #reservar .section-header h2 {
-  font-size: clamp(2.1rem, 4vw, 2.9rem);
+  font-size: clamp(1.9rem, 3.5vw, 2.5rem);
   font-weight: 700;
 }
 
@@ -1747,10 +1757,7 @@ button { font-family: inherit; }
 }
 
 /* Header más compacto para la sección "Consultar" (arriba de Reservar) */
-.consultar {
-  padding-top: 40px;
-  padding-bottom: 40px;
-}
+/* Nota: el padding se maneja en el bloque de ritmo visual (arriba) */
 
 .consultar .section-header {
   margin-bottom: 28px;
@@ -1766,7 +1773,7 @@ button { font-family: inherit; }
 }
 
 /* ── Info ── */
-.info { padding-top: 20px; }
+/* El padding se maneja en el bloque de ritmo visual (arriba) */
 
 .info-grid {
   display: grid;
@@ -2773,7 +2780,16 @@ button { font-family: inherit; }
 
 /* Pasos del wizard */
 .wizard-paso {
-  min-height: 220px;
+  min-height: 200px;
+  padding: 8px 4px;
+  border-radius: var(--radius-md);
+  transition: background 0.3s ease, padding 0.3s ease;
+}
+
+/* El paso activo se destaca levemente */
+.wizard-paso:not([hidden]) {
+  background: linear-gradient(180deg, rgba(251, 233, 238, 0.30) 0%, transparent 100%);
+  padding: 20px 16px;
 }
 
 .wizard-paso-titulo {
