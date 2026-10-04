@@ -2056,55 +2056,30 @@ button { font-family: inherit; }
 
 .acerca-nombre {
   font-family: var(--fuente-titulo);
-  font-size: clamp(1.6rem, 3vw, 2rem);
-  font-weight: 600;
+  font-size: clamp(2rem, 4vw, 2.8rem);
+  font-weight: 700;
   color: var(--rosa-700);
-  margin: 0;
-  line-height: 1.2;
+  margin: 0 0 10px;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
 }
 
 .acerca-handle {
   display: inline-block;
-  font-size: 0.75rem;
-  letter-spacing: 0.3em;
+  font-size: 0.85rem;
+  letter-spacing: 0.35em;
   text-transform: uppercase;
   color: var(--dorado);
-  font-weight: 500;
-  margin-bottom: 14px;
+  font-weight: 600;
+  margin-bottom: 24px;
 }
 
 .acerca-bio {
   color: var(--texto-soft);
-  font-size: 0.98rem;
-  line-height: 1.7;
-  margin: 0 0 20px;
-  max-width: 520px;
-}
-
-.acerca-redes {
-  display: flex;
-  gap: 12px;
-  justify-content: flex-end;
-  margin-top: auto;
-}
-
-.acerca-red {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 46px;
-  height: 46px;
-  border-radius: 50%;
-  background: var(--rosa-50);
-  border: 1.5px solid var(--rosa-100);
-  color: var(--rosa-700);
-  transition: all 0.2s ease;
-}
-
-.acerca-red:hover {
-  background: var(--rosa-100);
-  border-color: var(--rosa-300);
-  transform: translateY(-2px);
+  font-size: 1.15rem;
+  line-height: 1.8;
+  margin: 0;
+  max-width: 600px;
 }
 
 /* Banner CTA Instagram dentro de .acerca-card */
@@ -2162,21 +2137,27 @@ button { font-family: inherit; }
 @media (max-width: 640px) {
   .acerca-card {
     grid-template-columns: 1fr;
-    gap: 24px;
-    padding: 32px 24px;
+    gap: 28px;
+    padding: 36px 24px;
     text-align: center;
   }
 
   .acerca-avatar {
-    width: 150px;
-    height: 150px;
+    width: 160px;
+    height: 160px;
     font-size: 2.8rem;
     margin: 0 auto;
   }
 
   .acerca-info { align-items: center; height: auto; }
 
-  .acerca-redes { justify-content: center; margin-top: 8px; }
+  .acerca-nombre {
+    font-size: 1.8rem;
+  }
+
+  .acerca-bio {
+    font-size: 1.05rem;
+  }
 
   .acerca-cta {
     flex-direction: column;
