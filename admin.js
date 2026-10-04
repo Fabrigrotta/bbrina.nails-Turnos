@@ -11,7 +11,7 @@
    CONFIG · viene de window.BBRINA_CONFIG (script.js)
    ─────────────────────────────────────────────────────────── */
 const CFG = window.BBRINA_CONFIG || {
-  whatsapp: '54903413902715',
+  whatsapp: '5493413902715',
   servicios: [
     { id: 'kapping',        nombre: 'Kapping',              duracion: 90,  precio: '$—', emoji: '💅' },
     { id: 'semipermanente', nombre: 'Semipermanente',       duracion: 60,  precio: '$—', emoji: '✨' },
