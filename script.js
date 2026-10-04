@@ -1017,10 +1017,37 @@ function cancelarReserva(codigo) {
   if (error) error.hidden = true;
   if (cont) {
     cont.innerHTML = '';
-    const p = document.createElement('p');
-    p.className = 'consultar-vacio';
-    p.textContent = 'Tu turno fue cancelado. Si querés, podés reservar otro horario.';
-    cont.appendChild(p);
+
+    const cartel = document.createElement('div');
+    cartel.className = 'consultar-exito anim-fade-up';
+
+    // Ícono check en círculo verde
+    const icono = document.createElement('span');
+    icono.className = 'consultar-exito-icono';
+    icono.setAttribute('aria-hidden', 'true');
+    icono.innerHTML = '<svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
+
+    // Textos
+    const titulo = document.createElement('h3');
+    titulo.className = 'consultar-exito-titulo';
+    titulo.textContent = 'Turno cancelado';
+
+    const texto = document.createElement('p');
+    texto.className = 'consultar-exito-texto';
+    texto.textContent = 'Tu reserva fue eliminada. Si querés, podés reservar otro horario.';
+
+    // Botón para reservar otro
+    const btnReservar = document.createElement('a');
+    btnReservar.className = 'btn btn-primary consultar-exito-btn';
+    btnReservar.href = '#reservar';
+    btnReservar.textContent = 'Reservar otro turno';
+
+    cartel.appendChild(icono);
+    cartel.appendChild(titulo);
+    cartel.appendChild(texto);
+    cartel.appendChild(btnReservar);
+
+    cont.appendChild(cartel);
     cont.hidden = false;
   }
 
