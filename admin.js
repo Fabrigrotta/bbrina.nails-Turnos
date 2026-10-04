@@ -3,20 +3,22 @@
    Panel de reservas · v1 mockup (localStorage)
    ═══════════════════════════════════════════════════════════ */
 
+(function () {
+  'use strict';
+
+
 /* ───────────────────────────────────────────────────────────
-   CONFIG · misma config que script.js (debe estar sincronizada)
+   CONFIG · viene de window.BBRINA_CONFIG (script.js)
    ─────────────────────────────────────────────────────────── */
-/* El CONFIG se lee desde window.BBRINA_CONFIG (definido en script.js).
-   Fallback: si por alguna razón no está cargado, se usa un default mínimo. */
-const CONFIG = window.BBRINA_CONFIG || {
+const CFG = window.BBRINA_CONFIG || {
   whatsapp: '5491100000000',
   servicios: [
-    { id: 'kapping',        nombre: 'Kapping',              duracion: 90,  precio: '$—' },
-    { id: 'semipermanente', nombre: 'Semipermanente',       duracion: 60,  precio: '$—' },
-    { id: 'esculpidas',     nombre: 'Esculpidas',           duracion: 120, precio: '$—' },
-    { id: 'retiro',         nombre: 'Retiro + nuevo',       duracion: 90,  precio: '$—' },
-    { id: 'spa',            nombre: 'Spa de manos',         duracion: 45,  precio: '$—' },
-    { id: 'diseno',         nombre: 'Diseño personalizado', duracion: 30,  precio: '$—' }
+    { id: 'kapping',        nombre: 'Kapping',              duracion: 90,  precio: '$—', emoji: '💅' },
+    { id: 'semipermanente', nombre: 'Semipermanente',       duracion: 60,  precio: '$—', emoji: '✨' },
+    { id: 'esculpidas',     nombre: 'Esculpidas',           duracion: 120, precio: '$—', emoji: '💎' },
+    { id: 'retiro',         nombre: 'Retiro + nuevo',       duracion: 90,  precio: '$—', emoji: '🧴' },
+    { id: 'spa',            nombre: 'Spa de manos',         duracion: 45,  precio: '$—', emoji: '🌸' },
+    { id: 'diseno',         nombre: 'Diseño personalizado', duracion: 30,  precio: '$—', emoji: '🎨' }
   ],
   horarios: ['09:00', '10:30', '12:00', '14:00', '15:30', '17:00', '18:30'],
   diasNoLaborables: [0],
@@ -24,7 +26,6 @@ const CONFIG = window.BBRINA_CONFIG || {
   storageKey: 'bbrina.turnos.reservas.v1'
 };
 
-/* Extensiones propias de admin que NO vienen en el CONFIG público */
 const ADMIN_CONFIG = {
   authKey: 'bbrina.admin.auth.v1',
   loginUrl: 'index.html#login'
@@ -33,9 +34,9 @@ const ADMIN_CONFIG = {
 /* ───────────────────────────────────────────────────────────
    ESTADO
    ─────────────────────────────────────────────────────────── */
-const state = {
-  filtro: 'todas',        // filtro de fecha: todas / proximas / pasadas / semana / mes
-  filtroServicio: 'todos', // 'todos' o el id de un servicio
+const adminState = {
+  filtro: 'todas',
+  filtroServicio: 'todos',
   reservaEditando: null,
   reservaMoviendo: null,
   reservaCancelando: null
@@ -49,14 +50,14 @@ const $$ = (sel) => document.querySelectorAll(sel);
 
 function getReservas() {
   try {
-    return JSON.parse(localStorage.getItem(CONFIG.storageKey)) || [];
+    return JSON.parse(localStorage.getItem(CFG.storageKey)) || [];
   } catch {
     return [];
   }
 }
 
 function setReservas(reservas) {
-  localStorage.setItem(CONFIG.storageKey, JSON.stringify(reservas));
+  localStorage.setItem(CFG.storageKey, JSON.stringify(reservas));
 }
 
 function getFechaISO(date = new Date()) {
@@ -86,7 +87,7 @@ function buscarPorCodigo(codigo) {
 }
 
 function nombreServicio(id) {
-  const s = CONFIG.servicios.find(s => s.id === id);
+  const s = CFG.servicios.find(s => s.id === id);
   return s ? s.nombre : id;
 }
 
@@ -114,15 +115,26 @@ function cerrarSesion() {
 
 function initLogout() {
   const btn = $('#btn-logout');
+  const btnConfirmar = $('#btn-logout-confirmar');
+
   if (!btn) {
     console.warn('[admin.js] No encontré #btn-logout');
     return;
   }
+
+  // El botón del header abre el modal de confirmación
   btn.addEventListener('click', (e) => {
     e.preventDefault();
     e.stopPropagation();
-    cerrarSesion();
+    abrirModal('modal-logout');
   });
+
+  // El botón del modal confirma y cierra sesión
+  if (btnConfirmar) {
+    btnConfirmar.addEventListener('click', () => {
+      cerrarSesion();
+    });
+  }
 }
 
 /* ───────────────────────────────────────────────────────────
@@ -132,15 +144,13 @@ function initFiltroServicio() {
   const select = $('#filtro-servicio');
   if (!select) return;
 
-  // Poblar con los servicios
-  CONFIG.servicios.forEach(serv => {
+  CFG.servicios.forEach(serv => {
     const opt = document.createElement('option');
     opt.value = serv.id;
     opt.textContent = serv.nombre;
     select.appendChild(opt);
   });
 
-  // Listener de cambio
   select.addEventListener('change', () => {
     state.filtroServicio = select.value;
     renderTodo();
@@ -161,7 +171,6 @@ function filtrarReservas(reservas) {
   const hoyISO = getFechaISO();
   let filtradas = reservas;
 
-  // ── Filtro por fecha ──
   if (state.filtro === 'proximas') {
     filtradas = filtradas.filter(r => r.fecha >= hoyISO);
   } else if (state.filtro === 'pasadas') {
@@ -174,7 +183,6 @@ function filtrarReservas(reservas) {
     filtradas = filtradas.filter(r => r.fecha >= inicio && r.fecha <= fin);
   }
 
-  // ── Filtro por servicio ──
   if (state.filtroServicio && state.filtroServicio !== 'todos') {
     filtradas = filtradas.filter(r => r.servicio === state.filtroServicio);
   }
@@ -182,13 +190,11 @@ function filtrarReservas(reservas) {
   return filtradas;
 }
 
-/* Devuelve el lunes y domingo de la semana actual (ISO YYYY-MM-DD) */
 function getRangoSemanaActual() {
   const hoy = new Date();
   hoy.setHours(0, 0, 0, 0);
-  const diaSemana = hoy.getDay(); // 0=Dom, 1=Lun, ... 6=Sáb
+  const diaSemana = hoy.getDay();
 
-  // Queremos lunes como inicio
   const offsetLunes = (diaSemana === 0 ? -6 : 1 - diaSemana);
 
   const lunes = new Date(hoy);
@@ -203,7 +209,6 @@ function getRangoSemanaActual() {
   };
 }
 
-/* Devuelve el primer y último día del mes actual */
 function getRangoMesActual() {
   const hoy = new Date();
   const primerDia = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
@@ -217,7 +222,6 @@ function getRangoMesActual() {
 /* ───────────────────────────────────────────────────────────
    RENDER · LISTA
    ─────────────────────────────────────────────────────────── */
-/* Construye el nodo <article> de una reserva */
 function crearCardReserva(reserva) {
   const hoyISO = getFechaISO();
   const esPasada = reserva.fecha < hoyISO;
@@ -304,7 +308,6 @@ function crearCardReserva(reserva) {
   return card;
 }
 
-/* Bloque 1: últimos 5 reservados (por creadaEn descendente) */
 function renderRecientes() {
   const cont = $('#admin-lista-recientes');
   const vacio = $('#admin-vacio-recientes');
@@ -313,7 +316,6 @@ function renderRecientes() {
 
   const todas = getReservas();
 
-  // Ordenar por creadaEn desc; si no hay creadaEn, van al final
   const ordenadas = [...todas].sort((a, b) => {
     const ta = a.creadaEn ? new Date(a.creadaEn).getTime() : 0;
     const tb = b.creadaEn ? new Date(b.creadaEn).getTime() : 0;
@@ -337,7 +339,6 @@ function renderRecientes() {
   });
 }
 
-/* Bloque 2: todos los turnos (con filtros) */
 function renderLista() {
   const cont = $('#admin-lista');
   const vacio = $('#admin-vacio');
@@ -347,7 +348,6 @@ function renderLista() {
   const todas = getReservas();
   const filtradas = filtrarReservas(todas);
 
-  // Orden: por fecha ascendente, luego horario
   filtradas.sort((a, b) => {
     if (a.fecha !== b.fecha) return a.fecha < b.fecha ? -1 : 1;
     return (a.horario || '').localeCompare(b.horario || '');
@@ -368,8 +368,12 @@ function renderLista() {
   });
 }
 
-/* Render maestro: se llama después de cualquier cambio (editar/mover/cancelar) */
 function renderTodo() {
+  const todas = getReservas();
+  console.log('[admin] Total reservas en storage:', todas.length);
+  console.log('[admin] storageKey usada:', CFG.storageKey);
+  console.log('[admin] Primeras 2 reservas:', todas.slice(0, 2));
+
   renderRecientes();
   renderLista();
 }
@@ -461,7 +465,7 @@ function abrirMover(codigo) {
   }
   if (selectHorario) {
     selectHorario.innerHTML = '';
-    CONFIG.horarios.forEach(h => {
+    CFG.horarios.forEach(h => {
       const opt = document.createElement('option');
       opt.value = h;
       opt.textContent = h;
@@ -540,8 +544,8 @@ function confirmarCancelar() {
 let captchaResultado = 0;
 
 function generarCaptcha() {
-  const a = Math.floor(Math.random() * 9) + 1;  // 1-9
-  const b = Math.floor(Math.random() * 9) + 1;  // 1-9
+  const a = Math.floor(Math.random() * 9) + 1;
+  const b = Math.floor(Math.random() * 9) + 1;
   captchaResultado = a + b;
 
   const pregunta = document.getElementById('captcha-pregunta');
@@ -558,7 +562,6 @@ function generarCaptcha() {
 }
 
 function abrirBorrarTodo() {
-  // Resetear a paso 1
   const paso1 = document.getElementById('borrar-paso-1');
   const paso2 = document.getElementById('borrar-paso-2');
   const acc1 = document.getElementById('borrar-acciones-1');
@@ -569,7 +572,6 @@ function abrirBorrarTodo() {
   if (acc1) acc1.hidden = false;
   if (acc2) acc2.hidden = true;
 
-  // Generar captcha nuevo (por si volvió a abrir)
   generarCaptcha();
 
   abrirModal('modal-borrar-todo');
@@ -586,7 +588,6 @@ function irAPasoBorrar() {
   if (acc1) acc1.hidden = true;
   if (acc2) acc2.hidden = false;
 
-  // Regenerar captcha por las dudas
   generarCaptcha();
 
   const input = document.getElementById('captcha-input');
@@ -623,7 +624,7 @@ function verificarCaptcha() {
     err.hidden = true;
   } else {
     btnConfirmar.disabled = true;
-    err.hidden = true; // no mostramos error hasta que apriete "borrar"
+    err.hidden = true;
   }
 }
 
@@ -638,19 +639,16 @@ function confirmarBorrarTodo() {
     err.textContent = 'El resultado no es correcto. Probá de nuevo.';
     err.hidden = false;
 
-    // Regenerar captcha para evitar fuerza bruta
     generarCaptcha();
     setTimeout(() => document.getElementById('captcha-input')?.focus(), 50);
     return;
   }
 
-  // Confirmación OK → borrar todo
   setReservas([]);
 
   cerrarModal('modal-borrar-todo');
   renderTodo();
 
-  // Feedback
   window.alert('Se borraron todos los turnos.');
 }
 
@@ -694,7 +692,6 @@ function initBorrarTodo() {
    ─────────────────────────────────────────────────────────── */
 function escaparCSV(valor) {
   const s = String(valor ?? '');
-  // Si contiene ; " \n → lo envolvemos entre comillas y duplicamos comillas internas
   if (/[;"\n\r]/.test(s)) {
     return `"${s.replace(/"/g, '""')}"`;
   }
@@ -702,14 +699,13 @@ function escaparCSV(valor) {
 }
 
 function exportarCSV() {
-  const reservas = filtrarReservas(getReservas());
+  const reservas = getReservas();
 
   if (!reservas.length) {
-    window.alert('No hay reservas para exportar con los filtros actuales.');
+    window.alert('No hay reservas para exportar.');
     return;
   }
 
-  // Orden ascendente por fecha + horario
   reservas.sort((a, b) => {
     if (a.fecha !== b.fecha) return a.fecha < b.fecha ? -1 : 1;
     return (a.horario || '').localeCompare(b.horario || '');
@@ -727,7 +723,7 @@ function exportarCSV() {
   ];
 
   const filas = reservas.map(r => {
-    const serv = CONFIG.servicios.find(s => s.id === r.servicio);
+    const serv = CFG.servicios.find(s => s.id === r.servicio);
     const nombreServ = serv ? serv.nombre : (r.servicio || '');
     const creada = r.creadaEn
       ? new Date(r.creadaEn).toLocaleString('es-AR', {
@@ -748,14 +744,11 @@ function exportarCSV() {
     ].map(escaparCSV).join(';');
   });
 
-  // BOM UTF-8 para que Excel reconozca acentos
   const contenido = '\uFEFF' + encabezados.join(';') + '\n' + filas.join('\n');
 
-  // Nombre del archivo: bbrina-turnos-YYYY-MM-DD.csv
   const hoy = getFechaISO();
   const nombreArchivo = `bbrina-turnos-${hoy}.csv`;
 
-  // Crear blob y disparar la descarga
   const blob = new Blob([contenido], { type: 'text/csv;charset=utf-8;' });
   const url = URL.createObjectURL(blob);
 
@@ -766,7 +759,6 @@ function exportarCSV() {
   a.click();
   document.body.removeChild(a);
 
-  // Liberar memoria
   setTimeout(() => URL.revokeObjectURL(url), 100);
 }
 
@@ -793,7 +785,11 @@ function initYear() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-  // Guard de sesión: si no está logueado, redirige al index con el modal abierto
+  console.log('[admin] window.BBRINA_CONFIG?', !!window.BBRINA_CONFIG);
+  console.log('[admin] CFG.storageKey:', CFG.storageKey);
+  console.log('[admin] Reservas en localStorage:', (JSON.parse(localStorage.getItem(CFG.storageKey)) || []).length);
+  console.log('[admin] ¿Logueado?', estaLogueado());
+
   if (!estaLogueado()) {
     window.location.href = ADMIN_CONFIG.loginUrl;
     return;
@@ -809,3 +805,5 @@ document.addEventListener('DOMContentLoaded', () => {
 
   renderTodo();
 });
+
+})();  // ← cierre del IIFE

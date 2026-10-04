@@ -1088,9 +1088,6 @@ function initCopiarCodigo() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-  // Solo inicializamos la home si estamos en index.html
-  // (en admin.html no existen estos elementos, y no queremos
-  // que se ejecute nada del flujo de reserva).
   const esHome = !!document.querySelector('#form-turno');
   if (!esHome) return;
 

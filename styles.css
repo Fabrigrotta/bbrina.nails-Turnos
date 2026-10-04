@@ -142,14 +142,42 @@ button { font-family: inherit; }
 
 .header-nav {
   display: flex;
+  align-items: center;
   gap: 24px;
   font-size: 0.9rem;
   font-weight: 500;
+  flex-shrink: 0;
 }
 
 .header-nav a {
   color: var(--texto-soft);
   transition: color 0.2s ease;
+  white-space: nowrap;
+}
+
+@media (max-width: 640px) {
+  .header-nav {
+    gap: 14px;
+    font-size: 0.82rem;
+  }
+
+  .header-nav a {
+    /* En mobile ocultamos links "secundarios" para hacer espacio */
+    padding: 4px 0;
+  }
+}
+
+@media (max-width: 480px) {
+  .header-nav {
+    gap: 10px;
+    font-size: 0.78rem;
+  }
+
+  /* En pantallas muy chicas ocultamos "Acerca" e "Info" */
+  .header-nav a[href="#acerca"],
+  .header-nav a[href="#info"] {
+    display: none;
+  }
 }
 
 .header-nav a:hover { color: var(--rosa-700); }
@@ -694,116 +722,58 @@ button { font-family: inherit; }
   border: 1px solid var(--rosa-100);
   border-radius: var(--radius-md);
   padding: 18px;
-}
-
-.calendario-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 16px;
-}
-
-.calendario-titulo {
-  font-family: var(--fuente-titulo);
-  font-size: 1.1rem;
-  font-weight: 600;
-  color: var(--rosa-700);
-  text-transform: capitalize;
-}
-
-.calendario-nav {
-  display: flex;
-  gap: 6px;
-}
-
-.calendario-nav-btn {
-  width: 34px;
-  height: 34px;
-  border-radius: 50%;
-  border: 1.5px solid var(--rosa-100);
-  background: var(--rosa-50);
-  color: var(--rosa-700);
-  font-size: 1rem;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s ease;
-  font-family: inherit;
-}
-
-.calendario-nav-btn:hover:not(:disabled) {
-  border-color: var(--rosa-300);
-  background: var(--rosa-100);
-}
-
-.calendario-nav-btn:disabled {
-  opacity: 0.35;
-  cursor: not-allowed;
-}
-
-.calendario-hoy-btn {
-  font-family: inherit;
-  font-size: 0.78rem;
-  font-weight: 500;
-  letter-spacing: 0.06em;
-  color: var(--rosa-700);
-  background: var(--rosa-50);
-  border: 1.5px solid var(--rosa-100);
-  border-radius: var(--radius-full);
-  padding: 6px 14px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  height: 34px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.calendario-hoy-btn:hover:not(:disabled) {
-  border-color: var(--rosa-300);
-  background: var(--rosa-100);
-}
-
-.calendario-hoy-btn:disabled {
-  opacity: 0.35;
-  cursor: not-allowed;
+  max-width: 560px;
+  margin: 0 auto 24px;
+  overflow: hidden;       /* evita que el grid se desborde */
+  box-sizing: border-box;
 }
 
 .calendario-grid {
   display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  gap: 4px;
-}
-
-.calendario-dia-semana {
-  text-align: center;
-  font-size: 0.72rem;
-  font-weight: 600;
-  letter-spacing: 0.05em;
-  color: var(--texto-soft);
-  text-transform: uppercase;
-  padding: 6px 0;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 6px;
+  width: 100%;
 }
 
 .calendario-dia {
   position: relative;
   aspect-ratio: 1.5 / 1;
-  border: 1px solid transparent;
-  background: transparent;
-  border-radius: var(--radius-sm);
-  font-family: inherit;
-  font-size: 0.95rem;
-  font-weight: 600;
-  color: var(--texto);
-  cursor: pointer;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 3px;
-  padding: 4px;
-  transition: background 0.2s ease, border-color 0.2s ease;
+  min-width: 0;           /* permite que el grid comprima las celdas */
+  overflow: hidden;
+  /* ... resto igual */
+}
+
+/* En mobile: menos padding, gap chico, celdas cuadradas, fuente más chica */
+@media (max-width: 640px) {
+  .calendario {
+    padding: 12px;
+    max-width: 100%;
+  }
+
+  .calendario-grid {
+    gap: 3px;
+  }
+
+  .calendario-dia {
+    aspect-ratio: 1 / 1;
+    font-size: 0.82rem;
+    padding: 2px;
+  }
+
+  .calendario-dia-semana {
+    font-size: 0.65rem;
+    padding: 4px 0;
+  }
+}
+
+@media (max-width: 380px) {
+  .calendario {
+    padding: 10px;
+  }
+
+  .calendario-dia {
+    font-size: 0.75rem;
+  }
 }
 
 .calendario-dia:not(:disabled):not(.vacio) {
@@ -1768,6 +1738,13 @@ button { font-family: inherit; }
     font-size: 0.62rem;
     padding: 6px 12px;
     letter-spacing: 0.12em;
+  }
+}
+
+/* En mobile, el badge tapa el brand. Lo sacamos de la ecuación. */
+@media (max-width: 720px) {
+  .admin-badge {
+    display: none;
   }
 }
 
