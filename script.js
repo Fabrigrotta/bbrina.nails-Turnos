@@ -9,7 +9,7 @@
 const CONFIG = {
   // Número de WhatsApp en formato internacional SIN "+" ni espacios.
   // Ejemplo Argentina: 5491123456789
-  whatsapp: '5491100000000', // ⚠️ PLACEHOLDER · reemplazar
+  whatsapp: '5493413902715',
 
   // Duración por defecto de cada turno (minutos)
   duracionTurno: 60,
