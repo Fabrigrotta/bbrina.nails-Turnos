@@ -955,6 +955,46 @@ function renderConsulta(reservas) {
   cont.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
 
+function abrirConfirmCancelar(card, codigo) {
+  // Si ya hay un panel abierto, lo cerramos y salimos (toggle)
+  const existente = card.querySelector('.consultar-confirm');
+  if (existente) {
+    existente.remove();
+    return;
+  }
+
+  const panel = document.createElement('div');
+  panel.className = 'consultar-confirm anim-fade-up';
+
+  const texto = document.createElement('p');
+  texto.className = 'consultar-confirm-texto';
+  texto.textContent = '¿Seguro que querés cancelar este turno? Esta acción no se puede deshacer.';
+
+  const botones = document.createElement('div');
+  botones.className = 'consultar-confirm-botones';
+
+  const btnNo = document.createElement('button');
+  btnNo.type = 'button';
+  btnNo.className = 'btn btn-secondary';
+  btnNo.textContent = 'Volver';
+  btnNo.addEventListener('click', () => panel.remove());
+
+  const btnSi = document.createElement('button');
+  btnSi.type = 'button';
+  btnSi.className = 'btn btn-primary';
+  btnSi.textContent = 'Sí, cancelar';
+  btnSi.addEventListener('click', () => {
+    cancelarReserva(codigo);
+  });
+
+  botones.appendChild(btnNo);
+  botones.appendChild(btnSi);
+
+  panel.appendChild(texto);
+  panel.appendChild(botones);
+  card.appendChild(panel);
+}
+
 function cancelarReserva(codigo) {
   const codNorm = (codigo || '').replace(/\D/g, '').padStart(6, '0');
 
