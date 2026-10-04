@@ -682,7 +682,9 @@ function initFormulario() {
   // para no tener que releer el DOM cuando confirma.
   let reservaPendiente = null;
 
-  function irAPaso(n) {
+  function irAPaso(n, opciones = {}) {
+    const { scroll = true } = opciones;
+
     pasoActual = Math.max(1, Math.min(TOTAL_PASOS, n));
     ocultarError();
 
@@ -708,9 +710,11 @@ function initFormulario() {
     // Refrescar estado del botón "Continuar"
     actualizarBotonContinuar();
 
-    // Scroll suave al inicio del form
-    const reservar = document.querySelector('#reservar');
-    if (reservar) reservar.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    // Scroll suave al inicio del form (solo si `scroll` es true)
+    if (scroll) {
+      const reservar = document.querySelector('#reservar');
+      if (reservar) reservar.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
   }
 
   function pasoEstaCompleto(n) {
@@ -912,7 +916,9 @@ function initFormulario() {
     radio.addEventListener('change', actualizarBloqueSena);
   });
 
-  irAPaso(1);
+  // Init: arrancamos en el paso 1 SIN scrollear (para que la página
+  // cargue en el hero, no en la sección de reservar)
+  irAPaso(1, { scroll: false });
 }
 
 /* ───────────────────────────────────────────────────────────
