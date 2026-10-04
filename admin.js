@@ -42,6 +42,24 @@ const adminState = {
   reservaCancelando: null
 };
 
+/* Alias: el resto del archivo usa `state`, que apunta a adminState.
+   (Así no hay que renombrar todas las referencias). */
+const state = adminState;
+
+/* Caché de reservas (capa de compatibilidad con Supabase) */
+let reservasCache = [];
+
+async function cargarReservas() {
+  try {
+    const data = await window.SB.getReservas();
+    reservasCache = data || [];
+    console.log('[admin] Reservas cargadas desde Supabase:', reservasCache.length);
+  } catch (err) {
+    console.error('[admin] Error al cargar desde Supabase:', err);
+    reservasCache = [];
+  }
+}
+
 /* ───────────────────────────────────────────────────────────
    HELPERS
    ─────────────────────────────────────────────────────────── */
@@ -49,15 +67,15 @@ const $  = (sel) => document.querySelector(sel);
 const $$ = (sel) => document.querySelectorAll(sel);
 
 function getReservas() {
-  try {
-    return JSON.parse(localStorage.getItem(CFG.storageKey)) || [];
-  } catch {
-    return [];
-  }
+  // Lee del caché en memoria (sincrónico).
+  return reservasCache;
 }
 
 function setReservas(reservas) {
-  localStorage.setItem(CFG.storageKey, JSON.stringify(reservas));
+  // Actualiza el caché local.
+  reservasCache = reservas;
+  // Nota: los cambios específicos se mandan a Supabase desde cada función
+  // (guardarEdicion, guardarMover, confirmarCancelar, confirmarBorrarTodo).
 }
 
 function getFechaISO(date = new Date()) {
@@ -370,9 +388,7 @@ function renderLista() {
 
 function renderTodo() {
   const todas = getReservas();
-  console.log('[admin] Total reservas en storage:', todas.length);
-  console.log('[admin] storageKey usada:', CFG.storageKey);
-  console.log('[admin] Primeras 2 reservas:', todas.slice(0, 2));
+  console.log('[admin] Total reservas en caché:', todas.length);
 
   renderRecientes();
   renderLista();
@@ -437,13 +453,17 @@ function guardarEdicion() {
   const cod = normalizarCodigo(reserva.codigo);
   const nuevas = todas.map(r =>
     normalizarCodigo(r.codigo) === cod
-      ? { ...r, nombre, whatsapp, nota }
+      ? { ...r, fecha, horario }
       : r
   );
   setReservas(nuevas);
 
-  state.reservaEditando = null;
-  cerrarModal('modal-editar');
+  // Sincronizar con Supabase
+  window.SB.actualizarReserva(reserva.codigo, { fecha, horario })
+    .catch(err => console.error('[Supabase] Error al mover:', err));
+
+  state.reservaMoviendo = null;
+  cerrarModal('modal-mover');
   renderTodo();
 }
 
@@ -532,6 +552,10 @@ function confirmarCancelar() {
   const cod = normalizarCodigo(reserva.codigo);
   const nuevas = todas.filter(r => normalizarCodigo(r.codigo) !== cod);
   setReservas(nuevas);
+
+  // Sincronizar con Supabase
+  window.SB.borrarReserva(reserva.codigo)
+    .catch(err => console.error('[Supabase] Error al cancelar:', err));
 
   state.reservaCancelando = null;
   cerrarModal('modal-cancelar');
@@ -677,6 +701,10 @@ function confirmarBorrarTodo() {
   }
 
   setReservas([]);
+
+  // Sincronizar con Supabase
+  window.SB.borrarTodasLasReservas()
+    .catch(err => console.error('[Supabase] Error al borrar todo:', err));
 
   cerrarModal('modal-borrar-todo');
   renderTodo();
@@ -824,16 +852,17 @@ function initYear() {
   if (y) y.textContent = new Date().getFullYear();
 }
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
   console.log('[admin] window.BBRINA_CONFIG?', !!window.BBRINA_CONFIG);
-  console.log('[admin] CFG.storageKey:', CFG.storageKey);
-  console.log('[admin] Reservas en localStorage:', (JSON.parse(localStorage.getItem(CFG.storageKey)) || []).length);
   console.log('[admin] ¿Logueado?', estaLogueado());
 
   if (!estaLogueado()) {
     window.location.href = ADMIN_CONFIG.loginUrl;
     return;
   }
+
+  // Cargar reservas desde Supabase ANTES de inicializar
+  await cargarReservas();
 
   initLogout();
   initFiltros();

@@ -61,17 +61,34 @@ const state = {
 };
 
 /* ───────────────────────────────────────────────────────────
+   CACHÉ DE RESERVAS · capa de compatibilidad con Supabase
+   ───────────────────────────────────────────────────────────
+   Mantenemos las reservas en memoria para que getReservas() siga
+   siendo sincrónico. Al cargar la página se llena desde Supabase. */
+
+let reservasCache = [];
+
+async function cargarReservas() {
+  try {
+    const data = await window.SB.getReservas();
+    reservasCache = data || [];
+    console.log('[Cache] Reservas cargadas desde Supabase:', reservasCache.length);
+  } catch (err) {
+    console.error('[Cache] Error al cargar desde Supabase:', err);
+    reservasCache = [];
+  }
+}
+
+/* ───────────────────────────────────────────────────────────
    HELPERS
    ─────────────────────────────────────────────────────────── */
 const $  = (sel) => document.querySelector(sel);
 const $$ = (sel) => document.querySelectorAll(sel);
 
 function getReservas() {
-  try {
-    return JSON.parse(localStorage.getItem(CONFIG.storageKey)) || [];
-  } catch {
-    return [];
-  }
+  // Devuelve el caché en memoria (sincrónico).
+  // Se llena al cargar la página con cargarReservas().
+  return reservasCache;
 }
 
 function generarCodigoReserva() {
@@ -95,22 +112,23 @@ function generarCodigoReserva() {
 }
 
 function guardarReserva(reserva) {
-  const reservas = getReservas();
-
-  // Si estamos editando (mismo código), reemplazamos la reserva original
+  // 1) Actualizamos el caché local (sincrónico, para que se vea al toque)
   const codNuevo = (reserva.codigo || '').replace(/\D/g, '').padStart(6, '0');
-  const existenteIdx = reservas.findIndex(r => {
+  const existenteIdx = reservasCache.findIndex(r => {
     const rCod = (r.codigo || '').replace(/\D/g, '').padStart(6, '0');
     return rCod === codNuevo;
   });
 
   if (existenteIdx >= 0) {
-    reservas[existenteIdx] = reserva;
+    reservasCache[existenteIdx] = reserva;
   } else {
-    reservas.push(reserva);
+    reservasCache.push(reserva);
   }
 
-  localStorage.setItem(CONFIG.storageKey, JSON.stringify(reservas));
+  // 2) Mandamos a Supabase en paralelo (no bloqueamos el UI)
+  window.SB.guardarReserva(reserva).catch(err => {
+    console.error('[Supabase] Error al guardar reserva:', err);
+  });
 }
 
 function getFechaISO(date = new Date()) {
@@ -938,15 +956,18 @@ function renderConsulta(reservas) {
 }
 
 function cancelarReserva(codigo) {
-  const reservas = getReservas();
   const codNorm = (codigo || '').replace(/\D/g, '').padStart(6, '0');
 
-  const filtradas = reservas.filter(r => {
+  // 1) Actualizamos el caché local
+  reservasCache = reservasCache.filter(r => {
     const rCod = (r.codigo || '').replace(/\D/g, '').padStart(6, '0');
     return rCod !== codNorm;
   });
 
-  localStorage.setItem(CONFIG.storageKey, JSON.stringify(filtradas));
+  // 2) Mandamos a Supabase en paralelo
+  window.SB.borrarReserva(codigo).catch(err => {
+    console.error('[Supabase] Error al borrar reserva:', err);
+  });
 
   const form = $('#form-consultar');
   const cont = $('#consultar-resultado');
@@ -963,7 +984,6 @@ function cancelarReserva(codigo) {
     cont.hidden = false;
   }
 
-  // Refrescar calendario/horarios para que el horario liberado vuelva a estar disponible
   if (typeof renderCalendario === 'function') renderCalendario();
   if (typeof renderHorarios === 'function') renderHorarios();
 }
@@ -1087,9 +1107,12 @@ function initCopiarCodigo() {
   });
 }
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
   const esHome = !!document.querySelector('#form-turno');
   if (!esHome) return;
+
+  // Cargamos las reservas desde Supabase ANTES de renderizar
+  await cargarReservas();
 
   renderServicios();
   initCalendario();
