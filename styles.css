@@ -2331,6 +2331,38 @@ button { font-family: inherit; }
   margin: 0;
 }
 
+/* Bloque de info dentro del modal Editar */
+.modal-editar-info {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 14px 16px;
+  background: var(--rosa-50);
+  border: 1px dashed var(--rosa-200);
+  border-radius: var(--radius-md);
+  margin-bottom: 8px;
+}
+
+.modal-editar-info-row {
+  display: flex;
+  gap: 10px;
+  align-items: baseline;
+  font-size: 0.85rem;
+}
+
+.modal-editar-info-key {
+  color: var(--texto-soft);
+  font-weight: 500;
+  min-width: 90px;
+  flex-shrink: 0;
+}
+
+.modal-editar-info-val {
+  color: var(--texto);
+  font-weight: 500;
+  word-break: break-word;
+}
+
 .modal-acciones {
   display: flex;
   gap: 10px;

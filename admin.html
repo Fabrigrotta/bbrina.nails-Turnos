@@ -138,12 +138,24 @@
     </div>
   </div>
 
-  <!-- ═══════════════ MODAL MOVER ═══════════════ -->
+  <!-- ═══════════════ MODAL EDITAR (ex-Mover) ═══════════════ -->
   <div id="modal-mover" class="modal" hidden>
     <div class="modal-backdrop" data-close="modal-mover"></div>
     <div class="modal-card card">
-      <h3 class="modal-titulo">Mover turno</h3>
+      <h3 class="modal-titulo">Editar turno</h3>
       <p class="modal-subtitulo" id="modal-mover-codigo">—</p>
+
+      <!-- Info de la reserva actual (nuevo) -->
+      <div class="modal-editar-info">
+        <div class="modal-editar-info-row">
+          <span class="modal-editar-info-key">Clienta</span>
+          <span class="modal-editar-info-val" id="modal-mover-cliente">—</span>
+        </div>
+        <div class="modal-editar-info-row">
+          <span class="modal-editar-info-key">Turno actual</span>
+          <span class="modal-editar-info-val" id="modal-mover-actual">—</span>
+        </div>
+      </div>
 
       <div class="field">
         <label for="mover-fecha">Nueva fecha</label>

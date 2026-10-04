@@ -304,13 +304,7 @@ function crearCardReserva(reserva) {
   btnEditar.type = 'button';
   btnEditar.className = 'btn btn-secondary admin-btn-sm';
   btnEditar.textContent = 'Editar';
-  btnEditar.addEventListener('click', () => abrirEditar(reserva.codigo));
-
-  const btnMover = document.createElement('button');
-  btnMover.type = 'button';
-  btnMover.className = 'btn btn-secondary admin-btn-sm';
-  btnMover.textContent = 'Mover';
-  btnMover.addEventListener('click', () => abrirMover(reserva.codigo));
+  btnEditar.addEventListener('click', () => abrirMover(reserva.codigo));
 
   const btnCancelar = document.createElement('button');
   btnCancelar.type = 'button';
@@ -319,7 +313,6 @@ function crearCardReserva(reserva) {
   btnCancelar.addEventListener('click', () => abrirCancelar(reserva.codigo));
 
   acciones.appendChild(btnEditar);
-  acciones.appendChild(btnMover);
   acciones.appendChild(btnCancelar);
 
   card.appendChild(acciones);
@@ -475,14 +468,30 @@ function abrirMover(codigo) {
   if (!reserva) return;
   state.reservaMoviendo = reserva;
 
+  // Código de reserva
   $('#modal-mover-codigo').textContent = `#${reserva.codigo}`;
 
+  // Nombre de la clienta (nuevo)
+  const infoCliente = $('#modal-mover-cliente');
+  if (infoCliente) {
+    infoCliente.textContent = `${reserva.nombre || '—'} · ${reserva.whatsapp || '—'}`;
+  }
+
+  // Resumen de la reserva actual (nuevo)
+  const infoActual = $('#modal-mover-actual');
+  if (infoActual) {
+    infoActual.textContent = `Actualmente: ${formatearFecha(reserva.fecha)} · ${reserva.horario} hs`;
+  }
+
+  // Fecha
   const inputFecha = $('#mover-fecha');
-  const selectHorario = $('#mover-horario');
   if (inputFecha) {
     inputFecha.min = getFechaISO();
     inputFecha.value = reserva.fecha;
   }
+
+  // Horario
+  const selectHorario = $('#mover-horario');
   if (selectHorario) {
     selectHorario.innerHTML = '';
     CFG.horarios.forEach(h => {
