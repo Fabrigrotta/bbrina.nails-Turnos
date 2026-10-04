@@ -225,9 +225,9 @@ function renderHorarios() {
   const grid = $('#horarios-grid');
   if (!grid) return;
 
-  // Sin fecha → mensaje de ayuda
+  // Sin fecha → no mostramos nada (el título del paso ya explica qué hacer)
   if (!state.fechaSeleccionada) {
-    grid.innerHTML = `<p class="hint">Elegí primero una fecha para ver los horarios disponibles.</p>`;
+    grid.innerHTML = '';
     return;
   }
 
