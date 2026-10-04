@@ -258,11 +258,32 @@ function crearCardReserva(reserva) {
 
   const badge = document.createElement('span');
   badge.className = 'admin-card-badge';
+
   if (esHoy) {
     badge.classList.add('admin-card-badge-hoy');
     badge.textContent = 'Hoy';
+  } else if (esPasada) {
+    badge.textContent = 'Pasada';
   } else {
-    badge.textContent = esPasada ? 'Pasada' : 'Próxima';
+    // Calcular cuántos días faltan para el turno
+    const [y, m, d] = reserva.fecha.split('-').map(Number);
+    const fechaReserva = new Date(y, m - 1, d);
+    const hoy = new Date();
+    hoy.setHours(0, 0, 0, 0);
+    fechaReserva.setHours(0, 0, 0, 0);
+
+    const diffMs = fechaReserva - hoy;
+    const dias = Math.round(diffMs / (1000 * 60 * 60 * 24));
+
+    if (dias === 1) {
+      badge.classList.add('admin-card-badge-hoy');
+      badge.textContent = 'Mañana';
+    } else if (dias <= 7) {
+      badge.classList.add('admin-card-badge-semana');
+      badge.textContent = `En ${dias} días`;
+    } else {
+      badge.textContent = `En ${dias} días`;
+    }
   }
 
   header.appendChild(codigo);

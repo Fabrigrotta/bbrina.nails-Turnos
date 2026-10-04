@@ -2578,6 +2578,14 @@ button { font-family: inherit; }
   box-shadow: 0 0 0 3px rgba(90, 107, 79, 0.15);
 }
 
+/* Variante "Esta semana" — para reservas en los próximos 7 días */
+.admin-card-badge-semana {
+  color: var(--rosa-700);
+  background: linear-gradient(135deg, var(--dorado-soft), #f0e2be);
+  border-color: var(--dorado);
+  box-shadow: 0 0 0 3px rgba(201, 168, 106, 0.15);
+}
+
 .admin-card-body {
   display: flex;
   flex-direction: column;
