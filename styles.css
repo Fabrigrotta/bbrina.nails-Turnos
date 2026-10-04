@@ -871,13 +871,22 @@ button { font-family: inherit; }
   box-shadow: 0 6px 14px rgba(140, 74, 93, 0.12);
 }
 
-/* Día seleccionado */
-.calendario-dia.selected {
-  background: linear-gradient(135deg, var(--rosa-500), var(--rosa-700));
+/* Día seleccionado: fondo rosa fuerte (mismo gradiente que los botones primary) */
+.calendario-dia.selected,
+.calendario-dia:not(:disabled):not(.vacio).selected,
+.calendario-dia:not(:disabled):not(.vacio):hover.selected {
+  background: linear-gradient(135deg, #a84062, #6b2e42);
   color: var(--blanco);
   border-color: transparent;
-  box-shadow: 0 6px 16px rgba(107, 46, 66, 0.28);
+  box-shadow: 0 8px 20px rgba(107, 46, 66, 0.35);
   font-weight: 700;
+  transform: translateY(-2px);
+}
+
+/* En hover sobre un seleccionado: mantenemos el fondo fuerte */
+.calendario-dia.selected:hover {
+  background: linear-gradient(135deg, #a84062, #6b2e42);
+  border-color: transparent;
 }
 
 .calendario-dia.selected .calendario-dot {
