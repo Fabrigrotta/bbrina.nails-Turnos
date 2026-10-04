@@ -499,12 +499,17 @@ function mostrarRevision(reserva) {
   const nombreServ = serv ? serv.nombre : reserva.servicio;
   const duracion = serv ? ` (${serv.duracion} min)` : '';
 
+  const senaTexto = reserva.sena_monto
+    ? `\nSeña: $${reserva.sena_monto} (comprobante adjunto)`
+    : '';
+
   resumen.textContent =
     `Servicio: ${nombreServ}${duracion}\n` +
     `Fecha: ${formatearFecha(reserva.fecha)}\n` +
     `Horario: ${reserva.horario} hs\n` +
     `Nombre: ${reserva.nombre}\n` +
     `WhatsApp: ${reserva.whatsapp}` +
+    senaTexto +
     (reserva.nota ? `\nNota: ${reserva.nota}` : '');
 
   form.hidden = true;
@@ -534,11 +539,16 @@ function mostrarReservaExitosa(reserva) {
   const serv = CONFIG.servicios.find(s => s.id === reserva.servicio);
   const nombreServ = serv ? serv.nombre : reserva.servicio;
 
+  const senaTexto = reserva.sena_monto
+    ? `\nSeña: $${reserva.sena_monto} (comprobante adjunto)`
+    : '';
+
   resumen.textContent =
     `Servicio: ${nombreServ}\n` +
     `Fecha: ${formatearFecha(reserva.fecha)}\n` +
     `Horario: ${reserva.horario} hs\n` +
-    `A nombre de: ${reserva.nombre}`;
+    `A nombre de: ${reserva.nombre}` +
+    senaTexto;
 
   if (codigoEl) codigoEl.textContent = reserva.codigo || '—';
 
@@ -703,7 +713,20 @@ function initFormulario() {
     if (n === 3) {
       const nombre = $('#input-nombre')?.value.trim() || '';
       const whatsapp = $('#input-whatsapp')?.value.trim() || '';
-      return nombre.length >= 2 && whatsapp.replace(/\D/g, '').length >= 8;
+
+      if (nombre.length < 2) return false;
+      if (whatsapp.replace(/\D/g, '').length < 8) return false;
+
+      // Si eligió "Sí" en seña, validar monto y comprobante
+      const senaSeleccionada = document.querySelector('input[name="sena"]:checked')?.value || 'no';
+      if (senaSeleccionada === 'si') {
+        const monto = $('#input-sena-monto')?.value.trim() || '';
+        const comprobante = $('#input-sena-comprobante')?.files?.[0];
+        if (!monto || monto.replace(/\D/g, '').length === 0) return false;
+        if (!comprobante) return false;
+      }
+
+      return true;
     }
     return false;
   }
@@ -805,11 +828,25 @@ function initFormulario() {
   // Botón "Confirmar turno" del paso de revisión
   const btnConfirmar = $('#btn-confirmar-whatsapp');
   if (btnConfirmar) {
-    btnConfirmar.addEventListener('click', () => {
+    btnConfirmar.addEventListener('click', async () => {
       if (!reservaPendiente) return;
 
       activarSpinner(btnConfirmar);
 
+      // Si hay seña, subir comprobante ANTES de guardar la reserva
+      const senaSeleccionada = document.querySelector('input[name="sena"]:checked')?.value || 'no';
+      if (senaSeleccionada === 'si') {
+        const archivo = $('#input-sena-comprobante')?.files?.[0];
+        if (archivo) {
+          const url = await window.SB.subirComprobante(archivo);
+          if (url) {
+            reservaPendiente.sena_comprobante_url = url;
+          }
+        }
+        reservaPendiente.sena_monto = $('#input-sena-monto')?.value.trim() || '';
+      }
+
+      // Pequeño delay para que se sienta "trabajando"
       setTimeout(() => {
         guardarReserva(reservaPendiente);
 
@@ -844,6 +881,30 @@ function initFormulario() {
   // Exponer irAPaso para que editarReserva() pueda resetear el wizard
   // cuando se llama desde "Consultar turno".
   window.irAPasoDesdeEdicion = irAPaso;
+
+  // Mostrar/ocultar bloque de seña según el radio seleccionado
+  const radiosSena = $$('input[name="sena"]');
+  const bloqueSena = $('#bloque-sena');
+  const inputSenaMonto = $('#input-sena-monto');
+  const inputSenaComprobante = $('#input-sena-comprobante');
+
+  function actualizarBloqueSena() {
+    if (!bloqueSena) return;
+    const seleccionado = document.querySelector('input[name="sena"]:checked')?.value || 'no';
+    if (seleccionado === 'si') {
+      bloqueSena.hidden = false;
+    } else {
+      bloqueSena.hidden = true;
+      // Limpiar campos al ocultar
+      if (inputSenaMonto) inputSenaMonto.value = '';
+      if (inputSenaComprobante) inputSenaComprobante.value = '';
+    }
+    actualizarBotonContinuar();
+  }
+
+  radiosSena.forEach(radio => {
+    radio.addEventListener('change', actualizarBloqueSena);
+  });
 
   irAPaso(1);
 }
@@ -905,12 +966,17 @@ function renderConsulta(reservas) {
 
     const resumen = document.createElement('p');
     resumen.className = 'consultar-resumen';
+    const senaTexto = reserva.sena_monto
+      ? `\nSeña: $${reserva.sena_monto} (comprobante adjunto)`
+      : '';
+
     resumen.textContent =
       `Código: ${reserva.codigo || '—'}\n` +
       `Servicio: ${nombreServ}\n` +
       `Fecha: ${formatearFecha(reserva.fecha)}\n` +
       `Horario: ${reserva.horario} hs\n` +
       `A nombre de: ${reserva.nombre}` +
+      senaTexto +
       (reserva.nota ? `\nNota: ${reserva.nota}` : '') +
       (esPasada ? `\n\n(Esta reserva ya pasó.)` : '');
 

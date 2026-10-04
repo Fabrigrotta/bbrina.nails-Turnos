@@ -257,14 +257,43 @@
 
             <div class="field-row">
               <div class="field">
-                <label for="input-nombre">Nombre y apellido</label>
+                <label for="input-nombre">Nombre y apellido <span class="req">*</span></label>
                 <input type="text" id="input-nombre" name="nombre" placeholder="Ej: Bruna Pérez" required />
               </div>
               <div class="field">
-                <label for="input-whatsapp">WhatsApp</label>
+                <label for="input-whatsapp">WhatsApp <span class="req">*</span></label>
                 <input type="tel" id="input-whatsapp" name="whatsapp" placeholder="Ej: 11 2345 6789" required />
               </div>
             </div>
+
+            <!-- Seña -->
+            <div class="field field-sena">
+              <label>¿Señás el turno? <span class="req">*</span></label>
+              <div class="radio-group">
+                <label class="radio-option">
+                  <input type="radio" name="sena" value="no" checked />
+                  <span class="radio-option-txt">No</span>
+                </label>
+                <label class="radio-option">
+                  <input type="radio" name="sena" value="si" />
+                  <span class="radio-option-txt">Sí</span>
+                </label>
+              </div>
+            </div>
+
+            <!-- Bloque de seña (oculto por defecto) -->
+            <div id="bloque-sena" class="bloque-sena" hidden>
+              <div class="field">
+                <label for="input-sena-monto">Monto de la seña <span class="req">*</span></label>
+                <input type="text" id="input-sena-monto" name="sena_monto" placeholder="Ej: 5000" inputmode="numeric" />
+              </div>
+              <div class="field">
+                <label for="input-sena-comprobante">Comprobante de transferencia <span class="req">*</span></label>
+                <input type="file" id="input-sena-comprobante" name="sena_comprobante" accept="image/jpeg,image/png,image/webp,application/pdf" />
+                <span class="field-hint">Acepta imágenes (JPG, PNG, WebP) o PDF. Máximo 5 MB.</span>
+              </div>
+            </div>
+
             <div class="field">
               <label for="input-nota">Nota (opcional)</label>
               <textarea id="input-nota" name="nota" rows="3" placeholder="Ej: Vengo con diseño personalizado, referencia por IG, etc."></textarea>

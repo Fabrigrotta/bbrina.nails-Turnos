@@ -47,7 +47,9 @@ async function guardarReservaSB(reserva) {
       horario: reserva.horario,
       nombre: reserva.nombre,
       whatsapp: reserva.whatsapp,
-      nota: reserva.nota || null
+      nota: reserva.nota || null,
+      sena_monto: reserva.sena_monto || null,
+      sena_comprobante_url: reserva.sena_comprobante_url || null
     }, { onConflict: 'codigo' })
     .select()
     .single();
@@ -127,6 +129,38 @@ async function buscarReservasSB(whatsapp, codigo) {
   });
 }
 
+/* Sube un comprobante al Storage y devuelve la URL pública.
+   Uso: const url = await subirComprobanteSB(file); */
+async function subirComprobanteSB(file) {
+  if (!file) return null;
+
+  // Generar nombre único: timestamp + nombre original sanitizado
+  const timestamp = Date.now();
+  const nombreLimpio = file.name.replace(/[^a-zA-Z0-9.]/g, '_');
+  const path = `${timestamp}_${nombreLimpio}`;
+
+  const { data, error } = await supabaseClient
+    .storage
+    .from('comprobantes')
+    .upload(path, file, {
+      cacheControl: '3600',
+      upsert: false
+    });
+
+  if (error) {
+    console.error('[Supabase] Error al subir comprobante:', error);
+    return null;
+  }
+
+  // Obtener URL pública
+  const { data: urlData } = supabaseClient
+    .storage
+    .from('comprobantes')
+    .getPublicUrl(data.path);
+
+  return urlData?.publicUrl || null;
+}
+
 /* ───────────────────────────────────────────────────────────
    EXPONER AL SCOPE GLOBAL
    ─────────────────────────────────────────────────────────── */
@@ -136,5 +170,6 @@ window.SB = {
   actualizarReserva: actualizarReservaSB,
   borrarReserva: borrarReservaSB,
   borrarTodasLasReservas: borrarTodasLasReservasSB,
-  buscarReservas: buscarReservasSB
+  buscarReservas: buscarReservasSB,
+  subirComprobante: subirComprobanteSB
 };

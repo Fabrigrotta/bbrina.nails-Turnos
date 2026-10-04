@@ -279,6 +279,12 @@ function crearCardReserva(reserva) {
     ['Nombre', reserva.nombre || '—'],
     ['WhatsApp', reserva.whatsapp || '—']
   ];
+
+  // Seña (si aplica)
+  if (reserva.sena_monto) {
+    lineas.push(['Seña', `$${reserva.sena_monto}`]);
+  }
+
   if (reserva.nota) lineas.push(['Nota', reserva.nota]);
 
   lineas.forEach(([k, v]) => {
@@ -294,6 +300,24 @@ function crearCardReserva(reserva) {
     row.appendChild(vEl);
     body.appendChild(row);
   });
+
+  // Link al comprobante (si existe)
+  if (reserva.sena_comprobante_url) {
+    const linkComprobante = document.createElement('a');
+    linkComprobante.href = reserva.sena_comprobante_url;
+    linkComprobante.target = '_blank';
+    linkComprobante.rel = 'noopener';
+    linkComprobante.className = 'admin-card-comprobante';
+    linkComprobante.innerHTML = `
+      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+        <polyline points="7 10 12 15 17 10"/>
+        <line x1="12" y1="15" x2="12" y2="3"/>
+      </svg>
+      Ver comprobante de seña
+    `;
+    card.appendChild(linkComprobante);
+  }
 
   card.appendChild(body);
 

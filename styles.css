@@ -693,6 +693,121 @@ button { font-family: inherit; }
   gap: 14px;
 }
 
+/* Asterisco de campo requerido */
+.req {
+  color: #b23a48;
+  font-weight: 700;
+  margin-left: 2px;
+}
+
+/* Radio buttons de seña */
+.radio-group {
+  display: flex;
+  gap: 10px;
+}
+
+.radio-option {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  border: 1.5px solid var(--rosa-100);
+  border-radius: var(--radius-sm);
+  background: var(--rosa-50);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--texto);
+}
+
+.radio-option:hover {
+  border-color: var(--rosa-300);
+  background: var(--rosa-100);
+}
+
+.radio-option input[type="radio"] {
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border: 2px solid var(--rosa-300);
+  border-radius: 50%;
+  margin: 0;
+  position: relative;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.radio-option input[type="radio"]:checked {
+  border-color: var(--rosa-500);
+  background: var(--blanco);
+}
+
+.radio-option input[type="radio"]:checked::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--rosa-500), var(--rosa-700));
+  transform: translate(-50%, -50%);
+}
+
+.radio-option:has(input[type="radio"]:checked) {
+  border-color: var(--rosa-500);
+  background: var(--rosa-100);
+  color: var(--rosa-700);
+  font-weight: 600;
+}
+
+/* Bloque de seña */
+.bloque-sena {
+  background: var(--rosa-50);
+  border: 1px dashed var(--rosa-200);
+  border-radius: var(--radius-md);
+  padding: 18px 16px;
+  margin-bottom: 14px;
+  animation: fadeSlideUp 0.28s ease-out both;
+}
+
+.bloque-sena .field:last-child {
+  margin-bottom: 0;
+}
+
+/* Estilo de input file */
+.field input[type="file"] {
+  background: var(--blanco);
+  border: 1.5px dashed var(--rosa-300);
+  padding: 14px 16px;
+  cursor: pointer;
+  font-size: 0.88rem;
+}
+
+.field input[type="file"]:hover {
+  border-color: var(--rosa-500);
+}
+
+.field input[type="file"]::file-selector-button {
+  background: linear-gradient(135deg, var(--rosa-500), var(--rosa-700));
+  color: var(--blanco);
+  border: none;
+  padding: 8px 16px;
+  border-radius: var(--radius-full);
+  font-family: inherit;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  margin-right: 12px;
+  transition: all 0.2s ease;
+}
+
+.field input[type="file"]::file-selector-button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px rgba(107, 46, 66, 0.25);
+}
+
 /* ── Servicios grid ── */
 .servicios-grid {
   display: grid;
@@ -2238,6 +2353,30 @@ button { font-family: inherit; }
   border-top: 1px dashed var(--rosa-100);
   border-bottom: 1px dashed var(--rosa-100);
   padding: 12px 0;
+}
+
+.admin-card-comprobante {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  background: var(--sage-50);
+  border: 1px solid var(--sage-100);
+  border-radius: var(--radius-sm);
+  color: var(--sage-600);
+  font-size: 0.85rem;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.admin-card-comprobante:hover {
+  background: var(--sage-100);
+  border-color: var(--sage-500);
+  transform: translateY(-1px);
+}
+
+.admin-card-comprobante svg {
+  flex-shrink: 0;
 }
 
 .admin-row {
