@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link
-    href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Poppins:wght@300;400;500;600&display=swap"
+    href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Poppins:wght@300;400;500;600&family=Dancing+Script:wght@400;600;700&display=swap"
     rel="stylesheet"
   />
 
@@ -46,7 +46,7 @@
   <section class="hero">
     <div class="container hero-grid">
 
-      <!-- Columna izquierda: texto -->
+       <!-- Columna izquierda: texto -->
       <div class="hero-inner">
         <span class="hero-tag">Nail Studio</span>
 
@@ -64,10 +64,22 @@
         </p>
 
         <div class="hero-ctas">
-          <a href="#reservar" class="btn btn-primary">Reservar turno</a>
-          <!-- EDITAR: reemplazar href por el Instagram real -->
-          <a href="#" class="btn btn-secondary hero-cta-secondary" target="_blank" rel="noopener">
-            Ver trabajos en Instagram →
+          <a href="#reservar" class="btn btn-primary hero-cta-primary">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M8 2v4"/>
+              <path d="M16 2v4"/>
+              <rect x="3" y="6" width="18" height="18" rx="2" ry="2"/>
+              <path d="M3 10h18"/>
+            </svg>
+            Reservar turno
+          </a>
+          <a href="https://www.instagram.com/bbrina.nails" class="btn btn-secondary hero-cta-secondary" target="_blank" rel="noopener">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/>
+              <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/>
+              <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/>
+            </svg>
+            Ver trabajos en Instagram
           </a>
         </div>
       </div>
@@ -76,7 +88,7 @@
       <div class="hero-media">
         <div class="hero-media-marco">
           <img
-            src="assets/hero.jpg"
+            src="assets/logo.jpeg"
             alt="Trabajo de uñas de bbrina.nails"
             width="840"
             height="840"
@@ -90,6 +102,12 @@
             <span class="hero-media-fallback-marca">bbrina.nails</span>
           </div>
         </div>
+
+        <!-- Nuevo: badge flotante decorativo -->
+        <span class="hero-media-badge" aria-hidden="true">
+          <span class="hero-media-badge-dot"></span>
+          Atención personalizada
+        </span>
       </div>
 
     </div>
@@ -112,22 +130,66 @@
         </header>
 
         <form id="form-consultar" class="card form-consultar" novalidate>
+          <!-- Indicador de pasos visual (decorativo) -->
+          <div class="consultar-pasos" aria-hidden="true">
+            <div class="consultar-paso">
+              <span class="consultar-paso-num">1</span>
+              <span class="consultar-paso-txt">Ingresá tus datos</span>
+            </div>
+            <span class="consultar-paso-linea"></span>
+            <div class="consultar-paso">
+              <span class="consultar-paso-num">2</span>
+              <span class="consultar-paso-txt">Encontrá tu turno</span>
+            </div>
+          </div>
+
           <div class="field-row">
             <div class="field">
-              <label for="input-consultar-whatsapp">WhatsApp</label>
+              <label for="input-consultar-whatsapp">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                  <circle cx="12" cy="7" r="4"/>
+                </svg>
+                WhatsApp
+              </label>
               <input type="tel" id="input-consultar-whatsapp" name="whatsapp" placeholder="Ej: 11 2345 6789" required />
             </div>
             <div class="field">
-              <label for="input-consultar-codigo">Código de reserva</label>
-              <input type="text" id="input-consultar-codigo" name="codigo" placeholder="Ej: 482913" inputmode="numeric" pattern="[0-9]*" autocomplete="off" required />
+              <label for="input-consultar-codigo">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                  <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                </svg>
+                Código de reserva
+              </label>
+              <input type="text" id="input-consultar-codigo" name="codigo" placeholder="Ej: 0482913" inputmode="numeric" pattern="[0-9]*" autocomplete="off" required />
+              <span class="field-hint">Es el número de 6 dígitos que te dimos al reservar.</span>
             </div>
           </div>
 
           <p id="consultar-error" class="form-error" role="alert" hidden></p>
 
           <button type="submit" class="btn btn-primary btn-block">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <circle cx="11" cy="11" r="8"/>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
             Buscar turno
           </button>
+
+          <!-- Ayuda plegable · "¿No te acordás del código?" -->
+          <details class="consultar-ayuda">
+            <summary>¿No te acordás del código?</summary>
+            <div class="consultar-ayuda-cuerpo">
+              <p>Sin problema. Escribinos por WhatsApp con tu nombre y te lo mandamos.</p>
+              <a href="https://wa.me/5491100000000?text=Hola!%20Reserv%C3%A9%20un%20turno%20y%20me%20olvid%C3%A9%20el%20c%C3%B3digo" class="btn btn-secondary consultar-ayuda-btn" target="_blank" rel="noopener">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true">
+                  <path d="M20.52 3.48A11.9 11.9 0 0 0 12 0C5.37 0 0 5.37 0 12a11.9 11.9 0 0 0 1.64 6.06L0 24l6.18-1.62A11.9 11.9 0 0 0 12 24c6.63 0 12-5.37 12-12a11.9 11.9 0 0 0-3.48-8.52zM12 22a9.9 9.9 0 0 1-5.05-1.38l-.36-.22-3.66.96.98-3.57-.24-.37A9.9 9.9 0 0 1 2 12C2 6.48 6.48 2 12 2a9.9 9.9 0 0 1 7.07 2.93A9.9 9.9 0 0 1 22 12c0 5.52-4.48 10-10 10z"/>
+                </svg>
+                Escribir por WhatsApp
+              </a>
+            </div>
+          </details>
         </form>
 
         <!-- Resultado (oculto por defecto) -->
@@ -238,6 +300,9 @@
               Volver
             </button>
             <button type="button" id="btn-confirmar-whatsapp" class="btn btn-primary">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <polyline points="20 6 9 17 4 12"/>
+              </svg>
               Confirmar turno
             </button>
           </div>
@@ -355,9 +420,13 @@
               <strong>¿Querés ver mis trabajos?</strong>
               <span>En Instagram subo los diseños nuevos, novedades y promos.</span>
             </div>
-            <!-- EDITAR: reemplazar href por el Instagram real -->
-            <a href="#" class="btn btn-primary acerca-cta-btn" target="_blank" rel="noopener">
-              Seguime en Instagram →
+            <a href="https://www.instagram.com/bbrina.nails" class="btn btn-primary acerca-cta-btn" target="_blank" rel="noopener">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/>
+                <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/>
+                <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/>
+              </svg>
+              Seguime en Instagram
             </a>
           </aside>
 
@@ -386,11 +455,18 @@
         <!-- Grilla de testimonios -->
         <div class="testimonios-grid">
 
-          <!-- Testimonio 1 -->
+           <!-- Testimonio 1 -->
           <article class="testimonio-card">
-            <span class="testimonio-estrellas" aria-hidden="true">★★★★★</span>
+            <span class="testimonio-comillas" aria-hidden="true">"</span>
+            <div class="testimonio-estrellas" aria-label="5 de 5 estrellas">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+            </div>
             <p class="testimonio-texto">
-              "Amé el diseño y la atención. Sabrina es súper detallista y te deja las uñas impecables. Súper recomendable."
+              Amé el diseño y la atención. Sabrina es súper detallista y te deja las uñas impecables. Súper recomendable.
             </p>
             <footer class="testimonio-footer">
               <span class="testimonio-avatar" aria-hidden="true">C</span>
@@ -403,9 +479,16 @@
 
           <!-- Testimonio 2 -->
           <article class="testimonio-card">
-            <span class="testimonio-estrellas" aria-hidden="true">★★★★★</span>
+            <span class="testimonio-comillas" aria-hidden="true">"</span>
+            <div class="testimonio-estrellas" aria-label="5 de 5 estrellas">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+            </div>
             <p class="testimonio-texto">
-              "El turno fue puntual y el resultado quedó hermoso. Se nota que ama lo que hace. Vuelvo seguro todos los meses."
+              El turno fue puntual y el resultado quedó hermoso. Se nota que ama lo que hace. Vuelvo seguro todos los meses.
             </p>
             <footer class="testimonio-footer">
               <span class="testimonio-avatar" aria-hidden="true">J</span>
@@ -418,9 +501,16 @@
 
           <!-- Testimonio 3 -->
           <article class="testimonio-card">
-            <span class="testimonio-estrellas" aria-hidden="true">★★★★★</span>
+            <span class="testimonio-comillas" aria-hidden="true">"</span>
+            <div class="testimonio-estrellas" aria-label="5 de 5 estrellas">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+            </div>
             <p class="testimonio-texto">
-              "Muy linda experiencia, salí feliz con mis uñas y con los detalles del studio. Se nota el cariño en cada paso."
+              Muy linda experiencia, salí feliz con mis uñas y con los detalles del studio. Se nota el cariño en cada paso.
             </p>
             <footer class="testimonio-footer">
               <span class="testimonio-avatar" aria-hidden="true">S</span>
@@ -468,6 +558,24 @@
           <button type="submit" class="btn btn-primary">Ingresar</button>
         </div>
       </form>
+    </div>
+  </div>
+
+  <!-- ═══════════════ MODAL AVISO (reemplaza alert) ═══════════════ -->
+  <div id="modal-aviso" class="modal modal-aviso" hidden>
+    <div class="modal-backdrop" data-close="modal-aviso"></div>
+    <div class="modal-card card">
+      <span class="modal-aviso-icono" id="modal-aviso-icono" aria-hidden="true">
+        <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="20 6 9 17 4 12"/>
+        </svg>
+      </span>
+      <h3 class="modal-aviso-titulo" id="modal-aviso-titulo">—</h3>
+      <p class="modal-aviso-texto" id="modal-aviso-texto">—</p>
+
+      <div class="modal-acciones">
+        <button type="button" class="btn btn-primary" data-close="modal-aviso">Entendido</button>
+      </div>
     </div>
   </div>
 

@@ -628,6 +628,38 @@ function verificarCaptcha() {
   }
 }
 
+function mostrarAviso({ titulo, texto, tipo = 'success' }) {
+  const modal = document.getElementById('modal-aviso');
+  const icono = document.getElementById('modal-aviso-icono');
+  const tituloEl = document.getElementById('modal-aviso-titulo');
+  const textoEl = document.getElementById('modal-aviso-texto');
+  if (!modal || !tituloEl || !textoEl) return;
+
+  // Resetear clases de tipo
+  modal.classList.remove(
+    'modal-aviso-success',
+    'modal-aviso-warning',
+    'modal-aviso-danger'
+  );
+  modal.classList.add(`modal-aviso-${tipo}`);
+
+  // Ícono según tipo
+  if (icono) {
+    if (tipo === 'success') {
+      icono.innerHTML = '<svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
+    } else if (tipo === 'warning') {
+      icono.innerHTML = '<svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>';
+    } else if (tipo === 'danger') {
+      icono.innerHTML = '<svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>';
+    }
+  }
+
+  tituloEl.textContent = titulo;
+  textoEl.textContent = texto;
+
+  abrirModal('modal-aviso');
+}
+
 function confirmarBorrarTodo() {
   const input = document.getElementById('captcha-input');
   const err = document.getElementById('captcha-error');
@@ -649,7 +681,11 @@ function confirmarBorrarTodo() {
   cerrarModal('modal-borrar-todo');
   renderTodo();
 
-  window.alert('Se borraron todos los turnos.');
+  mostrarAviso({
+    titulo: '¡Listo!',
+    texto: 'Se borraron todos los turnos del sistema.',
+    tipo: 'success'
+  });
 }
 
 function initBorrarTodo() {
@@ -702,7 +738,11 @@ function exportarCSV() {
   const reservas = getReservas();
 
   if (!reservas.length) {
-    window.alert('No hay reservas para exportar.');
+    mostrarAviso({
+      titulo: 'Sin reservas',
+      texto: 'No hay reservas para exportar.',
+      tipo: 'warning'
+    });
     return;
   }
 

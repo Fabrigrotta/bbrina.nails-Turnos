@@ -180,7 +180,55 @@
 
   <!-- ═══════════════ MODAL BORRAR TODO ═══════════════ -->
   <div id="modal-borrar-todo" class="modal" hidden>
-    ...
+    <div class="modal-backdrop" data-close="modal-borrar-todo"></div>
+    <div class="modal-card card">
+      <h3 class="modal-titulo modal-titulo-peligro">Borrar todos los turnos</h3>
+      <p class="modal-subtitulo">Esta acción es irreversible.</p>
+
+      <div class="modal-paso" id="borrar-paso-1">
+        <p class="modal-texto">
+          Vas a eliminar <strong>TODAS</strong> las reservas del sistema.
+          Se van a liberar todos los horarios y no se puede deshacer.
+        </p>
+        <p class="modal-texto">
+          ¿Estás segura de que querés continuar?
+        </p>
+      </div>
+
+      <div class="modal-paso" id="borrar-paso-2" hidden>
+        <p class="modal-texto">
+          Para confirmar, resolvé esta operación:
+        </p>
+
+        <div class="captcha-box">
+          <span class="captcha-pregunta" id="captcha-pregunta">— + —</span>
+          <input
+            type="text"
+            id="captcha-input"
+            class="captcha-input"
+            inputmode="numeric"
+            pattern="[0-9]*"
+            autocomplete="off"
+            placeholder="?"
+            maxlength="3"
+          />
+        </div>
+
+        <p id="captcha-error" class="form-error" role="alert" hidden></p>
+      </div>
+
+      <div class="modal-acciones" id="borrar-acciones-1">
+        <button type="button" class="btn btn-secondary" data-close="modal-borrar-todo">Cancelar</button>
+        <button type="button" class="btn btn-primary" id="btn-borrar-siguiente">Continuar</button>
+      </div>
+
+      <div class="modal-acciones" id="borrar-acciones-2" hidden>
+        <button type="button" class="btn btn-secondary" id="btn-borrar-volver">Volver</button>
+        <button type="button" class="btn btn-primary admin-btn-danger-solid" id="btn-borrar-confirmar" disabled>
+          Sí, borrar todo
+        </button>
+      </div>
+    </div>
   </div>
 
   <!-- ═══════════════ MODAL CERRAR SESIÓN ═══════════════ -->
@@ -194,6 +242,24 @@
       <div class="modal-acciones">
         <button type="button" class="btn btn-secondary" data-close="modal-logout">Cancelar</button>
         <button type="button" class="btn btn-primary" id="btn-logout-confirmar">Sí, cerrar sesión</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════ MODAL AVISO (reemplaza alert) ═══════════════ -->
+  <div id="modal-aviso" class="modal modal-aviso" hidden>
+    <div class="modal-backdrop" data-close="modal-aviso"></div>
+    <div class="modal-card card">
+      <span class="modal-aviso-icono" id="modal-aviso-icono" aria-hidden="true">
+        <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="20 6 9 17 4 12"/>
+        </svg>
+      </span>
+      <h3 class="modal-aviso-titulo" id="modal-aviso-titulo">—</h3>
+      <p class="modal-aviso-texto" id="modal-aviso-texto">—</p>
+
+      <div class="modal-acciones">
+        <button type="button" class="btn btn-primary" data-close="modal-aviso">Entendido</button>
       </div>
     </div>
   </div>

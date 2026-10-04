@@ -20,6 +20,12 @@
   --dorado:   #c9a86a;
   --dorado-soft: #e6d3a8;
 
+  /* Verde sage · color de acento */
+  --sage-500: #5a6b4f;
+  --sage-600: #4a5a40;
+  --sage-100: #d9e2d2;
+  --sage-50:  #eef2e9;
+
   --texto: #2e1f24;
   --texto-soft: #634a52;
   --blanco:   #ffffff;
@@ -31,10 +37,12 @@
   --radius-sm: 10px;
   --radius-md: 16px;
   --radius-lg: 24px;
+  --radius-xl: 32px;
   --radius-full: 999px;
 
   --fuente-titulo: 'Playfair Display', Georgia, serif;
   --fuente-cuerpo: 'Poppins', system-ui, -apple-system, sans-serif;
+  --fuente-firma: 'Dancing Script', 'Playfair Display', cursive;
 
   --max-w: 1100px;
 }
@@ -400,6 +408,65 @@ button { font-family: inherit; }
   opacity: 0.55;
 }
 
+/* Botón principal del hero con ícono */
+.hero-cta-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.hero-cta-primary svg {
+  flex-shrink: 0;
+}
+
+/* Badge flotante sobre el marco del hero */
+.hero-media-badge {
+  position: absolute;
+  bottom: 20px;
+  left: -10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--rosa-700);
+  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid var(--rosa-100);
+  border-radius: var(--radius-full);
+  padding: 8px 16px;
+  box-shadow: var(--sombra-md);
+  backdrop-filter: blur(6px);
+  z-index: 2;
+  animation: heroBadgeFloat 4s ease-in-out infinite;
+}
+
+.hero-media-badge-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--sage-500);
+  box-shadow: 0 0 0 3px rgba(90, 107, 79, 0.2);
+  flex-shrink: 0;
+}
+
+@keyframes heroBadgeFloat {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-6px); }
+}
+
+@media (max-width: 860px) {
+  .hero-media-badge {
+    left: 50%;
+    transform: translateX(-50%);
+    bottom: -10px;
+  }
+
+  @keyframes heroBadgeFloat {
+    0%, 100% { transform: translateX(-50%) translateY(0); }
+    50%      { transform: translateX(-50%) translateY(-6px); }
+  }
+}
+
 /* Responsive: mobile → una columna, texto centrado */
 @media (max-width: 860px) {
   .hero {
@@ -468,13 +535,28 @@ button { font-family: inherit; }
 }
 
 .section-tag {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
   font-size: 0.72rem;
   letter-spacing: 0.3em;
   text-transform: uppercase;
   color: var(--dorado);
-  font-weight: 500;
-  margin-bottom: 12px;
+  font-weight: 600;
+  margin-bottom: 14px;
+}
+
+/* Líneas decorativas a los lados del tag */
+.section-tag::before,
+.section-tag::after {
+  content: '';
+  width: 24px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--dorado));
+}
+
+.section-tag::after {
+  background: linear-gradient(90deg, var(--dorado), transparent);
 }
 
 .section-header h2 {
@@ -484,6 +566,12 @@ button { font-family: inherit; }
   color: var(--rosa-700);
   margin: 0 0 14px;
   letter-spacing: -0.01em;
+}
+
+/* Palabras en itálica dentro del h2 → dorado, para acentos */
+.section-header h2 em {
+  font-style: italic;
+  color: var(--dorado);
 }
 
 /* Jerarquía especial: "Reservar" es la acción principal del sitio.
@@ -506,12 +594,13 @@ button { font-family: inherit; }
 
 /* ── Card base ── */
 .card {
-  background: var(--blanco);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--sombra-md);
-  padding: 32px;
-  border: 1px solid rgba(189, 88, 120, 0.12);
-  /* Borde superior de acento: le da "volumen" a la card */
+  background: linear-gradient(180deg, var(--blanco) 0%, rgba(251, 233, 238, 0.25) 100%);
+  border-radius: var(--radius-xl);
+  box-shadow:
+    0 1px 2px rgba(90, 45, 60, 0.04),
+    0 10px 30px rgba(90, 45, 60, 0.13);
+  padding: 36px;
+  border: 1px solid rgba(189, 88, 120, 0.10);
   border-top: 3px solid rgba(189, 88, 120, 0.35);
 }
 
@@ -1054,18 +1143,25 @@ button { font-family: inherit; }
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: 10px;
   font-family: inherit;
   font-size: 0.95rem;
-  font-weight: 500;
+  font-weight: 600;
   padding: 14px 28px;
   border-radius: var(--radius-full);
   border: none;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.22s ease;
   letter-spacing: 0.02em;
+  white-space: nowrap;
 }
 
+.btn svg {
+  flex-shrink: 0;
+  transition: transform 0.22s ease;
+}
+
+/* Botón primario: shine + sombra fuerte + icono que se mueve */
 .btn-primary {
   position: relative;
   overflow: hidden;
@@ -1077,19 +1173,57 @@ button { font-family: inherit; }
   border: 1px solid rgba(107, 46, 66, 0.4);
 }
 
-.btn-primary:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--sombra-lg);
+.btn-primary::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    100deg,
+    transparent 0%,
+    transparent 40%,
+    rgba(255, 255, 255, 0.35) 50%,
+    transparent 60%,
+    transparent 100%
+  );
+  transition: left 0.6s ease;
+  pointer-events: none;
 }
 
+.btn-primary:hover::before {
+  left: 100%;
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    0 12px 28px rgba(107, 46, 66, 0.32),
+    0 4px 8px rgba(107, 46, 66, 0.15);
+}
+
+.btn-primary:hover svg {
+  transform: translateX(2px);
+}
+
+/* Botón secundario: doble borde sutil + hover más marcado */
 .btn-secondary {
   background: var(--blanco);
   color: var(--rosa-700);
   border: 1.5px solid var(--rosa-300);
+  box-shadow: 0 1px 2px rgba(90, 45, 60, 0.04);
 }
 
 .btn-secondary:hover {
   background: var(--rosa-50);
+  border-color: var(--rosa-500);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 14px rgba(140, 74, 93, 0.12);
+}
+
+.btn-secondary:hover svg {
+  transform: scale(1.1);
 }
 
 .btn-block { width: 100%; }
@@ -1268,6 +1402,97 @@ button { font-family: inherit; }
   margin-top: 6px;
 }
 
+/* Header de cada card de consulta */
+.consultar-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 8px;
+  padding-bottom: 10px;
+  border-bottom: 1px dashed var(--rosa-100);
+}
+
+.consultar-card-codigo {
+  font-family: var(--fuente-titulo);
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--rosa-700);
+  letter-spacing: 0.04em;
+}
+
+.consultar-badge {
+  font-size: 0.7rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  font-weight: 600;
+  border-radius: var(--radius-full);
+  padding: 4px 10px;
+  border: 1px solid transparent;
+}
+
+/* Badge "Próximo" · verde sage */
+.consultar-badge-proxima {
+  color: var(--sage-600);
+  background: var(--sage-50);
+  border-color: rgba(90, 107, 79, 0.35);
+}
+
+/* Badge "Pasado" · gris */
+.consultar-badge-pasada {
+  color: var(--texto-soft);
+  background: rgba(122, 95, 104, 0.08);
+  border-color: rgba(122, 95, 104, 0.25);
+}
+
+/* Card pasada: opacidad reducida */
+.consultar-card-pasada {
+  opacity: 0.72;
+}
+
+/* Card próxima: borde verde sutil */
+.consultar-card-proxima {
+  border-color: rgba(90, 107, 79, 0.35);
+}
+
+/* Panel de confirmación in-line */
+.consultar-confirm {
+  margin-top: 12px;
+  padding: 14px 16px;
+  background: #fdecef;
+  border: 1px solid #f5c6cf;
+  border-radius: var(--radius-sm);
+}
+
+.consultar-confirm-texto {
+  margin: 0 0 12px;
+  font-size: 0.9rem;
+  color: #b23a48;
+  font-weight: 500;
+}
+
+.consultar-confirm-botones {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.consultar-confirm-botones .btn {
+  flex: 1 1 auto;
+  padding: 10px 18px;
+  font-size: 0.85rem;
+}
+
+@media (max-width: 480px) {
+  .consultar-confirm-botones {
+    flex-direction: column;
+  }
+
+  .consultar-confirm-botones .btn {
+    width: 100%;
+  }
+}
+
 .consultar-card .consultar-acciones .btn {
   flex: 1 1 auto;
   min-width: 150px;
@@ -1289,6 +1514,150 @@ button { font-family: inherit; }
   font-style: italic;
   padding: 12px 0;
   margin: 0;
+}
+
+/* Indicador de pasos del consultar */
+.consultar-pasos {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 8px;
+  padding: 12px 16px;
+  background: linear-gradient(135deg, var(--rosa-50), rgba(230, 211, 168, 0.20));
+  border: 1px dashed var(--rosa-200);
+  border-radius: var(--radius-md);
+}
+
+.consultar-paso {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.consultar-paso-num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--rosa-500), var(--rosa-700));
+  color: var(--blanco);
+  font-size: 0.75rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.consultar-paso-txt {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--rosa-700);
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+.consultar-paso-linea {
+  flex: 1;
+  max-width: 40px;
+  height: 1px;
+  background: linear-gradient(90deg, var(--rosa-300), var(--dorado));
+  border-radius: var(--radius-full);
+}
+
+/* Labels con ícono */
+.form-consultar .field label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.form-consultar .field label svg {
+  color: var(--dorado);
+  flex-shrink: 0;
+}
+
+/* Hint debajo del input */
+.field-hint {
+  font-size: 0.74rem;
+  color: var(--texto-soft);
+  font-style: italic;
+  margin-top: 2px;
+  line-height: 1.4;
+}
+
+/* Ayuda plegable */
+.consultar-ayuda {
+  background: transparent;
+  border-top: 1px dashed var(--rosa-100);
+  padding-top: 16px;
+  margin-top: 4px;
+}
+
+.consultar-ayuda summary {
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--rosa-700);
+  list-style: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 0;
+  transition: color 0.2s ease;
+}
+
+.consultar-ayuda summary::-webkit-details-marker {
+  display: none;
+}
+
+.consultar-ayuda summary::before {
+  content: '?';
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--rosa-100);
+  color: var(--rosa-700);
+  font-size: 0.72rem;
+  font-weight: 700;
+  flex-shrink: 0;
+  transition: all 0.2s ease;
+}
+
+.consultar-ayuda[open] summary::before {
+  background: var(--rosa-500);
+  color: var(--blanco);
+}
+
+.consultar-ayuda summary:hover {
+  color: var(--rosa-500);
+}
+
+.consultar-ayuda-cuerpo {
+  margin-top: 12px;
+  padding: 14px 16px;
+  background: var(--rosa-50);
+  border-radius: var(--radius-md);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: flex-start;
+  animation: fadeSlideUp 0.24s ease-out both;
+}
+
+.consultar-ayuda-cuerpo p {
+  margin: 0;
+  font-size: 0.88rem;
+  color: var(--texto-soft);
+  line-height: 1.5;
+}
+
+.consultar-ayuda-btn {
+  padding: 10px 18px;
+  font-size: 0.85rem;
 }
 
 /* Código de reserva en el cartel de éxito */
@@ -1771,10 +2140,10 @@ button { font-family: inherit; }
 
 /* Variante "Hoy" — para reservas del día actual */
 .admin-card-badge-hoy {
-  color: var(--rosa-700);
-  background: linear-gradient(135deg, var(--dorado-soft), #f0e2be);
-  border-color: var(--dorado);
-  box-shadow: 0 0 0 3px rgba(201, 168, 106, 0.15);
+  color: var(--blanco);
+  background: linear-gradient(135deg, var(--sage-500), var(--sage-600));
+  border-color: var(--sage-600);
+  box-shadow: 0 0 0 3px rgba(90, 107, 79, 0.15);
 }
 
 .admin-card-body {
@@ -1839,8 +2208,9 @@ button { font-family: inherit; }
 .modal-backdrop {
   position: absolute;
   inset: 0;
-  background: rgba(61, 42, 48, 0.45);
-  backdrop-filter: blur(4px);
+  background: rgba(46, 31, 36, 0.55);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
 }
 
 .modal-card {
@@ -1895,6 +2265,76 @@ button { font-family: inherit; }
   .admin-lista { grid-template-columns: 1fr; }
   .modal-acciones { flex-direction: column; }
   .modal-acciones .btn { width: 100%; }
+}
+
+/* ── Modal de aviso (reemplaza window.alert) ── */
+.modal-aviso .modal-card {
+  max-width: 420px;
+  text-align: center;
+  align-items: center;
+  padding: 32px 28px;
+}
+
+.modal-aviso-icono {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--rosa-400), var(--rosa-700));
+  color: var(--blanco);
+  margin-bottom: 4px;
+  box-shadow: 0 8px 20px rgba(140, 74, 93, 0.25);
+}
+
+.modal-aviso-icono svg {
+  display: block;
+}
+
+.modal-aviso-titulo {
+  font-family: var(--fuente-titulo);
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: var(--rosa-700);
+  margin: 0;
+  line-height: 1.2;
+}
+
+.modal-aviso-texto {
+  font-size: 0.95rem;
+  color: var(--texto-soft);
+  margin: 0;
+  line-height: 1.6;
+  max-width: 320px;
+}
+
+.modal-aviso .modal-acciones {
+  width: 100%;
+  justify-content: center;
+}
+
+.modal-aviso .modal-acciones .btn {
+  flex: 1 1 auto;
+  min-width: 140px;
+}
+
+/* Variante "success" (fondo verde sage) */
+.modal-aviso-success .modal-aviso-icono {
+  background: linear-gradient(135deg, var(--sage-500), var(--sage-600));
+  box-shadow: 0 8px 20px rgba(90, 107, 79, 0.25);
+}
+
+/* Variante "warning" (fondo ámbar) */
+.modal-aviso-warning .modal-aviso-icono {
+  background: linear-gradient(135deg, #e6a93b, #c98c28);
+  box-shadow: 0 8px 20px rgba(201, 140, 40, 0.25);
+}
+
+/* Variante "danger" (fondo rojo) */
+.modal-aviso-danger .modal-aviso-icono {
+  background: linear-gradient(135deg, #d9534f, #b23a48);
+  box-shadow: 0 8px 20px rgba(178, 58, 72, 0.25);
 }
 
 /* Animar modales automáticamente cuando se muestran */
@@ -2510,87 +2950,114 @@ button { font-family: inherit; }
 
 .testimonio-card {
   position: relative;
-  background: var(--blanco);
+  background: linear-gradient(180deg, var(--blanco) 0%, rgba(251, 233, 238, 0.25) 100%);
   border: 1px solid var(--rosa-100);
-  border-radius: var(--radius-md);
-  padding: 26px 24px;
+  border-radius: var(--radius-lg);
+  padding: 30px 26px 26px;
   box-shadow: var(--sombra-sm);
   display: flex;
   flex-direction: column;
-  gap: 14px;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  gap: 16px;
+  transition: transform 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease;
+  overflow: hidden;
 }
 
 .testimonio-card:hover {
-  transform: translateY(-3px);
+  transform: translateY(-4px);
   box-shadow: var(--sombra-md);
+  border-color: var(--rosa-300);
 }
 
-.testimonio-card::before {
-  content: '"';
+/* Comilla decorativa grande */
+.testimonio-comillas {
   position: absolute;
-  top: 6px;
-  right: 20px;
+  top: -12px;
+  right: 22px;
   font-family: var(--fuente-titulo);
-  font-size: 4rem;
+  font-size: 6rem;
   line-height: 1;
   color: var(--rosa-100);
   pointer-events: none;
   user-select: none;
+  font-style: italic;
 }
 
+/* Estrellas en SVG */
 .testimonio-estrellas {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
   color: #e6a93b;
-  font-size: 0.95rem;
-  letter-spacing: 2px;
+}
+
+.testimonio-estrellas svg {
+  display: block;
 }
 
 .testimonio-texto {
-  font-size: 0.92rem;
+  font-size: 0.95rem;
   color: var(--texto);
-  line-height: 1.65;
+  line-height: 1.7;
   margin: 0;
   flex: 1;
+  position: relative;
+  z-index: 1;
+  font-style: italic;
+}
+
+.testimonio-texto::before {
+  content: '"';
+  font-style: normal;
+}
+
+.testimonio-texto::after {
+  content: '"';
+  font-style: normal;
 }
 
 .testimonio-footer {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding-top: 14px;
-  border-top: 1px dashed var(--rosa-100);
+  padding-top: 16px;
+  border-top: 1px dashed var(--rosa-200);
+  margin-top: 4px;
 }
 
 .testimonio-avatar {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 42px;
-  height: 42px;
+  width: 46px;
+  height: 46px;
   border-radius: 50%;
-  background: linear-gradient(135deg, var(--rosa-200), var(--rosa-400));
+  background: linear-gradient(135deg, var(--rosa-400), var(--rosa-700));
   color: var(--blanco);
   font-family: var(--fuente-titulo);
-  font-size: 1.1rem;
-  font-weight: 600;
+  font-size: 1.15rem;
+  font-weight: 700;
   flex-shrink: 0;
+  border: 2px solid var(--blanco);
+  box-shadow: 0 4px 12px rgba(140, 74, 93, 0.20);
 }
 
 .testimonio-autor {
   display: flex;
   flex-direction: column;
-  line-height: 1.25;
+  line-height: 1.3;
 }
 
 .testimonio-autor strong {
-  font-size: 0.92rem;
+  font-size: 0.95rem;
   color: var(--rosa-700);
-  font-weight: 600;
+  font-weight: 700;
+  letter-spacing: -0.01em;
 }
 
 .testimonio-autor span {
-  font-size: 0.78rem;
+  font-size: 0.76rem;
   color: var(--texto-soft);
+  font-style: italic;
 }
 
 /* Responsive */
