@@ -418,6 +418,16 @@ function renderCalendario() {
       btn.classList.add('selected');
     }
 
+    // Día urgente → guardamos cuántos horarios libres quedan
+    // (el tooltip lo lee de acá al hover/tap)
+    if (!noLaborable && !pasada) {
+      const libres = contarLibres(fechaISO);
+      if (libres > 0 && libres <= 3) {
+        btn.classList.add('calendario-dia-urgente');
+        btn.dataset.quedan = String(libres);
+      }
+    }
+
     // Número del día
     const num = document.createElement('span');
     num.textContent = dia;
@@ -432,6 +442,12 @@ function renderCalendario() {
       dot.classList.add(colorDisponibilidad(fechaISO));
     }
     btn.appendChild(dot);
+
+    // Tooltip de urgencia: aparece al hover (desktop) o al primer tap (mobile)
+    if (btn.classList.contains('calendario-dia-urgente')) {
+      btn.setAttribute('aria-label',
+        `${dia} · Últimos ${btn.dataset.quedan} turnos disponibles`);
+    }
 
     btn.addEventListener('click', () => seleccionarFecha(fechaISO));
     grid.appendChild(btn);
@@ -474,6 +490,117 @@ function seleccionarFecha(fechaISO) {
 
 function initCalendario() {
   renderCalendario();
+  initTooltipUrgencia();
+}
+
+function initTooltipUrgencia() {
+  const cont = document.getElementById('calendario');
+  if (!cont) return;
+
+  // Creamos el tooltip UNA sola vez y lo reutilizamos.
+  let tooltip = document.getElementById('calendario-tooltip');
+  if (!tooltip) {
+    tooltip = document.createElement('div');
+    tooltip.id = 'calendario-tooltip';
+    tooltip.className = 'calendario-tooltip';
+    tooltip.setAttribute('role', 'tooltip');
+    tooltip.hidden = true;
+    document.body.appendChild(tooltip);
+  }
+
+  let tooltipTimer = null;
+
+  function mostrarTooltip(btn) {
+    const quedan = btn.dataset.quedan;
+    if (!quedan) return;
+
+    const n = parseInt(quedan, 10);
+    const texto = n === 1
+      ? 'Último turno disponible'
+      : `Últimos ${n} turnos disponibles`;
+
+    tooltip.textContent = texto;
+    tooltip.hidden = false;
+    tooltip.classList.remove('calendario-tooltip-visible');
+
+    // Posicionar arriba del día, centrado
+    const rect = btn.getBoundingClientRect();
+    const tooltipRect = tooltip.getBoundingClientRect();
+
+    let top = rect.top + window.scrollY - tooltipRect.height - 10;
+    let left = rect.left + window.scrollX + (rect.width / 2) - (tooltipRect.width / 2);
+
+    // Si se sale por la izquierda, lo pegamos al borde
+    if (left < 8) left = 8;
+    // Si se sale por la derecha, lo pegamos al borde
+    const maxLeft = window.scrollX + document.documentElement.clientWidth - tooltipRect.width - 8;
+    if (left > maxLeft) left = maxLeft;
+
+    tooltip.style.top = `${top}px`;
+    tooltip.style.left = `${left}px`;
+
+    // Forzamos reflow para que la animación se dispare bien
+    void tooltip.offsetWidth;
+    tooltip.classList.add('calendario-tooltip-visible');
+  }
+
+  function ocultarTooltip() {
+    if (tooltipTimer) {
+      clearTimeout(tooltipTimer);
+      tooltipTimer = null;
+    }
+    tooltip.classList.remove('calendario-tooltip-visible');
+    // Esperamos a que termine la transición antes de ocultar
+    tooltipTimer = setTimeout(() => {
+      tooltip.hidden = true;
+    }, 180);
+  }
+
+  // Delegación de eventos: sirve aunque el calendario se re-renderice
+  cont.addEventListener('mouseover', (e) => {
+    const btn = e.target.closest('.calendario-dia-urgente');
+    if (!btn || btn.disabled) return;
+    mostrarTooltip(btn);
+  });
+
+  cont.addEventListener('mouseout', (e) => {
+    const btn = e.target.closest('.calendario-dia-urgente');
+    if (!btn) return;
+    // Solo ocultamos si realmente salimos del botón
+    const related = e.relatedTarget;
+    if (related && btn.contains(related)) return;
+    ocultarTooltip();
+  });
+
+  // En mobile: al primer tap mostramos el tooltip; al segundo, seleccionamos
+  cont.addEventListener('touchstart', (e) => {
+    const btn = e.target.closest('.calendario-dia-urgente');
+    if (!btn || btn.disabled) return;
+
+    const yaMostrado = tooltip.hidden === false
+      && tooltip.dataset.targetFecha === btn.dataset.fecha;
+
+    if (!yaMostrado) {
+      // Primer tap: solo mostramos el tooltip
+      e.preventDefault();
+      tooltip.dataset.targetFecha = btn.dataset.fecha;
+      mostrarTooltip(btn);
+      // Auto-ocultar a los 3s
+      if (tooltipTimer) clearTimeout(tooltipTimer);
+      tooltipTimer = setTimeout(() => {
+        ocultarTooltip();
+        delete tooltip.dataset.targetFecha;
+      }, 3000);
+    } else {
+      // Segundo tap: dejamos que el click normal seleccione el día
+      delete tooltip.dataset.targetFecha;
+      ocultarTooltip();
+    }
+  }, { passive: false });
+
+  // Ocultar tooltip si se scrollea o se cambia el tamaño
+  window.addEventListener('scroll', ocultarTooltip, { passive: true });
+  window.addEventListener('resize', ocultarTooltip);
 }
 
 /* ───────────────────────────────────────────────────────────
