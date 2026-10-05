@@ -443,6 +443,16 @@ function renderCalendario() {
     }
     btn.appendChild(dot);
 
+    // Badge numérico de urgencia: muestra cuántos turnos quedan
+    // Solo para días con pocos horarios libres (≤ 3)
+    if (btn.classList.contains('calendario-dia-urgente')) {
+      const badge = document.createElement('span');
+      badge.className = 'calendario-dia-badge';
+      badge.textContent = btn.dataset.quedan;
+      badge.setAttribute('aria-hidden', 'true');
+      btn.appendChild(badge);
+    }
+
     // Tooltip de urgencia: aparece al hover (desktop) o al primer tap (mobile)
     if (btn.classList.contains('calendario-dia-urgente')) {
       btn.setAttribute('aria-label',

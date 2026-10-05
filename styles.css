@@ -1148,6 +1148,48 @@ button { font-family: inherit; }
   color: var(--rosa-700);
 }
 
+/* Badge numérico de urgencia: aparece en la esquina superior derecha
+   del día cuando quedan pocos turnos (≤ 3). Reemplaza visualmente al
+   tooltip al hover, mostrando el número siempre visible. */
+.calendario-dia-badge {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: var(--radius-full);
+  background: #d9534f;
+  color: var(--blanco);
+  font-family: var(--fuente-cuerpo);
+  font-size: 0.62rem;
+  font-weight: 700;
+  line-height: 16px;
+  text-align: center;
+  pointer-events: none;
+  box-shadow: 0 1px 3px rgba(178, 58, 72, 0.35);
+  animation: badgeUrgenciaPop 0.3s ease-out both;
+}
+
+/* Cuando el día está seleccionado, el badge se vuelve dorado
+   para mantener contraste sobre el fondo rosa fuerte */
+.calendario-dia.selected .calendario-dia-badge {
+  background: var(--dorado);
+  color: var(--blanco);
+  box-shadow: 0 1px 3px rgba(201, 168, 106, 0.45);
+}
+
+@keyframes badgeUrgenciaPop {
+  from {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
 /* Día deshabilitado (pasado o no laborable) */
 .calendario-dia:disabled {
   color: #c9b8bf;
@@ -1322,6 +1364,14 @@ button { font-family: inherit; }
   .calendario-dot.rojo {
     width: 7px;
     height: 7px;
+  }
+
+  .calendario-dia-badge {
+    min-width: 14px;
+    height: 14px;
+    font-size: 0.56rem;
+    line-height: 14px;
+    padding: 0 3px;
   }
 }
 
