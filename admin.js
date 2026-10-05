@@ -40,7 +40,8 @@ const adminState = {
   busqueda: '',
   reservaEditando: null,
   reservaMoviendo: null,
-  reservaCancelando: null
+  reservaCancelando: null,
+  bloqueoEliminando: null
 };
 
 /* Alias: el resto del archivo usa `state`, que apunta a adminState.
@@ -1062,11 +1063,37 @@ async function confirmarBloqueo() {
     tipo: 'success'
   });
 }
-async function eliminarBloqueo(bloqueo) {
-  const ok = window.confirm(`¿Eliminar el bloqueo del ${formatearFecha(bloqueo.fecha)}?`);
-  if (!ok) return;
+function eliminarBloqueo(bloqueo) {
+  // Guardamos el bloqueo y abrimos el modal de confirmación
+  state.bloqueoEliminando = bloqueo;
+
+  const subtitulo = document.getElementById('modal-eliminar-bloqueo-fecha');
+  if (subtitulo) {
+    subtitulo.textContent = `Bloqueo del ${formatearFecha(bloqueo.fecha)}`;
+  }
+
+  abrirModal('modal-eliminar-bloqueo');
+}
+
+async function confirmarEliminarBloqueo() {
+  const bloqueo = state.bloqueoEliminando;
+  if (!bloqueo) return;
+
+  const btn = document.getElementById('btn-confirmar-eliminar-bloqueo');
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = 'Eliminando...';
+  }
 
   const result = await window.SB.borrarBloqueo(bloqueo.id);
+
+  if (btn) {
+    btn.disabled = false;
+    btn.textContent = 'Sí, eliminar';
+  }
+
+  state.bloqueoEliminando = null;
+  cerrarModal('modal-eliminar-bloqueo');
 
   if (!result) {
     mostrarAviso({
@@ -1093,6 +1120,7 @@ function initBloqueos() {
   const btnTodoDia = document.getElementById('btn-bloquear-todo-dia');
   const btnLimpiar = document.getElementById('btn-bloquear-limpiar');
   const btnConfirmar = document.getElementById('btn-confirmar-bloqueo');
+  const btnConfirmarEliminar = document.getElementById('btn-confirmar-eliminar-bloqueo');
 
   if (btnAbrir) {
     btnAbrir.addEventListener('click', abrirModalBloquear);
@@ -1108,6 +1136,10 @@ function initBloqueos() {
 
   if (btnConfirmar) {
     btnConfirmar.addEventListener('click', confirmarBloqueo);
+  }
+
+  if (btnConfirmarEliminar) {
+    btnConfirmarEliminar.addEventListener('click', confirmarEliminarBloqueo);
   }
 }
 
