@@ -37,6 +37,7 @@ const ADMIN_CONFIG = {
 const adminState = {
   filtro: 'todas',
   filtroServicio: 'todos',
+  busqueda: '',
   reservaEditando: null,
   reservaMoviendo: null,
   reservaCancelando: null
@@ -200,6 +201,30 @@ function initFiltros() {
   });
 }
 
+function initBuscador() {
+  const input = document.getElementById('admin-buscar');
+  const btnLimpiar = document.getElementById('admin-buscar-limpiar');
+  if (!input) return;
+
+  // Input de búsqueda
+  input.addEventListener('input', () => {
+    state.busqueda = input.value;
+    if (btnLimpiar) btnLimpiar.hidden = !input.value;
+    renderTodo();
+  });
+
+  // Botón limpiar
+  if (btnLimpiar) {
+    btnLimpiar.addEventListener('click', () => {
+      input.value = '';
+      state.busqueda = '';
+      btnLimpiar.hidden = true;
+      renderTodo();
+      input.focus();
+    });
+  }
+}
+
 function filtrarReservas(reservas) {
   const hoyISO = getFechaISO();
   let filtradas = reservas;
@@ -218,6 +243,26 @@ function filtrarReservas(reservas) {
 
   if (state.filtroServicio && state.filtroServicio !== 'todos') {
     filtradas = filtradas.filter(r => r.servicio === state.filtroServicio);
+  }
+
+  // Filtro por búsqueda (nombre, whatsapp o código)
+  if (state.busqueda) {
+    const q = state.busqueda.toLowerCase().trim();
+    const qDigitos = q.replace(/\D/g, '');
+
+    filtradas = filtradas.filter(r => {
+      const nombre = (r.nombre || '').toLowerCase();
+      const whatsapp = (r.whatsapp || '').replace(/\D/g, '');
+      const codigo = (r.codigo || '').replace(/\D/g, '').padStart(6, '0');
+
+      // Si el usuario tipeó solo dígitos, buscamos en whatsapp y código
+      if (qDigitos && !/[a-záéíóúñ]/i.test(q)) {
+        return whatsapp.includes(qDigitos) || codigo.includes(qDigitos);
+      }
+
+      // Si hay texto, buscamos en nombre
+      return nombre.includes(q);
+    });
   }
 
   return filtradas;
@@ -1372,6 +1417,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   initLogout();
   initFiltros();
   initFiltroServicio();
+  initBuscador();
   initModales();
   initBotones();
   initBorrarTodo();

@@ -3029,6 +3029,90 @@ button { font-family: inherit; }
   border-bottom: 1px dashed var(--rosa-100);
 }
 
+/* ── Buscador ── */
+.admin-buscador {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 480px;
+  margin: 0 auto 16px;
+  padding: 4px 6px 4px 14px;
+  background: var(--blanco);
+  border: 1.5px solid var(--rosa-100);
+  border-radius: var(--radius-full);
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.admin-buscador:focus-within {
+  border-color: var(--rosa-400);
+  box-shadow: 0 0 0 4px rgba(189, 88, 120, 0.10);
+}
+
+.admin-buscador-icono {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--texto-soft);
+  flex-shrink: 0;
+}
+
+.admin-buscador:focus-within .admin-buscador-icono {
+  color: var(--rosa-500);
+}
+
+.admin-buscador-input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  font-family: inherit;
+  font-size: 0.9rem;
+  color: var(--texto);
+  padding: 10px 4px;
+  outline: none;
+  min-width: 0;
+}
+
+.admin-buscador-input::placeholder {
+  color: #b8a5ac;
+}
+
+/* Quitar la "X" nativa del input type=search */
+.admin-buscador-input::-webkit-search-cancel-button {
+  display: none;
+}
+
+.admin-buscador-limpiar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: none;
+  background: var(--rosa-50);
+  color: var(--rosa-700);
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+  font-family: inherit;
+  line-height: 1;
+  padding: 0;
+}
+
+.admin-buscador-limpiar:hover {
+  background: var(--rosa-100);
+  transform: scale(1.05);
+}
+
+@media (max-width: 640px) {
+  .admin-buscador {
+    max-width: 100%;
+  }
+}
+
 .admin-filtros-label {
   font-size: 0.85rem;
   font-weight: 500;
