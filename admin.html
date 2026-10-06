@@ -222,14 +222,37 @@
   <div id="modal-cancelar" class="modal" hidden>
     <div class="modal-backdrop" data-close="modal-cancelar"></div>
     <div class="modal-card card">
-      <h3 class="modal-titulo">Cancelar turno</h3>
-      <p class="modal-subtitulo" id="modal-cancelar-codigo">—</p>
-      <p class="modal-texto">Esta acción elimina la reserva y libera el horario. ¿Continuar?</p>
 
-      <div class="modal-acciones">
-        <button type="button" class="btn btn-secondary" data-close="modal-cancelar">Volver</button>
-        <button type="button" class="btn btn-primary" id="btn-confirmar-cancelar">Sí, cancelar</button>
+      <!-- ── Paso 1: confirmación inicial ── -->
+      <div class="modal-paso" id="cancelar-paso-1">
+        <h3 class="modal-titulo">Cancelar turno</h3>
+        <p class="modal-subtitulo" id="modal-cancelar-codigo">—</p>
+        <p class="modal-texto">Esta acción elimina la reserva y libera el horario. ¿Continuar?</p>
+
+        <div class="modal-acciones">
+          <button type="button" class="btn btn-secondary" data-close="modal-cancelar">Volver</button>
+          <button type="button" class="btn btn-primary" id="btn-cancelar-siguiente">Sí, cancelar</button>
+        </div>
       </div>
+
+      <!-- ── Paso 2: confirmación final ── -->
+      <div class="modal-paso" id="cancelar-paso-2" hidden>
+        <h3 class="modal-titulo modal-titulo-peligro">Confirmá la cancelación</h3>
+        <p class="modal-subtitulo" id="modal-cancelar-info">—</p>
+        <p class="modal-texto">
+          Esta acción <strong>no se puede deshacer</strong>. El horario va a quedar libre
+          y la reserva se va a eliminar del sistema.
+        </p>
+        <p class="modal-texto">¿Confirmás la cancelación?</p>
+
+        <div class="modal-acciones">
+          <button type="button" class="btn btn-secondary" id="btn-cancelar-volver">Volver</button>
+          <button type="button" class="btn btn-primary admin-btn-danger-solid" id="btn-confirmar-cancelar">
+            Sí, cancelar definitivamente
+          </button>
+        </div>
+      </div>
+
     </div>
   </div>
 

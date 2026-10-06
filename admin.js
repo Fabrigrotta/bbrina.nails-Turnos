@@ -599,6 +599,12 @@ function abrirModal(id) {
 function cerrarModal(id) {
   const m = document.getElementById(id);
   if (m) m.hidden = true;
+
+  // Si estamos cerrando el modal de cancelar, reseteamos al paso 1
+  // para que la próxima vez que se abra arranque limpio.
+  if (id === 'modal-cancelar') {
+    irAPasoCancelar(1);
+  }
 }
 
 function initModales() {
@@ -728,6 +734,12 @@ function guardarMover() {
     return;
   }
 
+  // Guardamos los datos originales para el mensaje del aviso
+  const fechaOriginal = reserva.fecha;
+  const horarioOriginal = reserva.horario;
+  const codigoReserva = reserva.codigo;
+
+  // Actualizamos el caché local
   const todas = getReservas();
   const cod = normalizarCodigo(reserva.codigo);
   const nuevas = todas.map(r =>
@@ -740,6 +752,32 @@ function guardarMover() {
   state.reservaMoviendo = null;
   cerrarModal('modal-mover');
   renderTodo();
+
+  // Sincronizamos con Supabase y mostramos aviso según el resultado
+  window.SB.actualizarReserva(codigoReserva, { fecha, horario })
+    .then(result => {
+      if (result) {
+        mostrarAviso({
+          titulo: 'Turno actualizado',
+          texto: `Se movió el turno #${codigoReserva} del ${formatearFecha(fechaOriginal)} a las ${horarioOriginal} hs al ${formatearFecha(fecha)} a las ${horario} hs.`,
+          tipo: 'success'
+        });
+      } else {
+        mostrarAviso({
+          titulo: 'No se pudo sincronizar',
+          texto: 'El cambio se aplicó localmente, pero no se pudo guardar en el servidor. Intentá de nuevo.',
+          tipo: 'warning'
+        });
+      }
+    })
+    .catch(error => {
+      console.error('[Supabase] Error al mover reserva:', error);
+      mostrarAviso({
+        titulo: 'Error al guardar',
+        texto: 'Hubo un problema al conectar con el servidor. Intentá de nuevo.',
+        tipo: 'danger'
+      });
+    });
 }
 
 /* ───────────────────────────────────────────────────────────
@@ -750,26 +788,78 @@ function abrirCancelar(codigo) {
   if (!reserva) return;
   state.reservaCancelando = reserva;
 
-  $('#modal-cancelar-codigo').textContent = `#${reserva.codigo} · ${reserva.nombre || ''}`;
+  // Paso 1: código + nombre
+  const codigoEl = document.getElementById('modal-cancelar-codigo');
+  if (codigoEl) {
+    codigoEl.textContent = `#${reserva.codigo} · ${reserva.nombre || ''}`;
+  }
+
+  // Paso 2: info que se muestra en la confirmación final
+  const infoEl = document.getElementById('modal-cancelar-info');
+  if (infoEl) {
+    infoEl.textContent = `Turno #${reserva.codigo} · ${reserva.nombre || '—'} · ${formatearFecha(reserva.fecha)} a las ${reserva.horario} hs`;
+  }
+
+  // Siempre arrancamos en el paso 1
+  irAPasoCancelar(1);
+
   abrirModal('modal-cancelar');
+}
+
+/* Muestra un paso del modal de cancelar y oculta el otro */
+function irAPasoCancelar(paso) {
+  const paso1 = document.getElementById('cancelar-paso-1');
+  const paso2 = document.getElementById('cancelar-paso-2');
+
+  if (paso1) paso1.hidden = paso !== 1;
+  if (paso2) paso2.hidden = paso !== 2;
 }
 
 function confirmarCancelar() {
   const reserva = state.reservaCancelando;
   if (!reserva) return;
 
+  // Guardamos los datos para el mensaje del aviso
+  const codigoReserva = reserva.codigo;
+  const fechaReserva = reserva.fecha;
+  const horarioReserva = reserva.horario;
+  const nombreClienta = reserva.nombre || '—';
+
+  // Actualizamos el caché local
   const todas = getReservas();
   const cod = normalizarCodigo(reserva.codigo);
   const nuevas = todas.filter(r => normalizarCodigo(r.codigo) !== cod);
   setReservas(nuevas);
 
-  // Sincronizar con Supabase
-  window.SB.borrarReserva(reserva.codigo)
-    .catch(err => console.error('[Supabase] Error al cancelar:', err));
-
   state.reservaCancelando = null;
   cerrarModal('modal-cancelar');
   renderTodo();
+
+  // Sincronizamos con Supabase y mostramos aviso según el resultado
+  window.SB.borrarReserva(codigoReserva)
+    .then(ok => {
+      if (ok) {
+        mostrarAviso({
+          titulo: 'Turno cancelado',
+          texto: `Se canceló el turno #${codigoReserva} de ${nombreClienta} del ${formatearFecha(fechaReserva)} a las ${horarioReserva} hs. El horario quedó libre.`,
+          tipo: 'success'
+        });
+      } else {
+        mostrarAviso({
+          titulo: 'No se pudo sincronizar',
+          texto: 'El turno se canceló localmente, pero no se pudo eliminar del servidor. Intentá de nuevo.',
+          tipo: 'warning'
+        });
+      }
+    })
+    .catch(error => {
+      console.error('[Supabase] Error al cancelar reserva:', error);
+      mostrarAviso({
+        titulo: 'Error al cancelar',
+        texto: 'Hubo un problema al conectar con el servidor. Intentá de nuevo.',
+        tipo: 'danger'
+      });
+    });
 }
 
 /* ───────────────────────────────────────────────────────────
@@ -1421,6 +1511,19 @@ function initBotones() {
   const guardarMoverBtn = $('#btn-guardar-mover');
   if (guardarMoverBtn) guardarMoverBtn.addEventListener('click', guardarMover);
 
+  // Modal cancelar: paso 1 → paso 2
+  const cancelarSiguienteBtn = $('#btn-cancelar-siguiente');
+  if (cancelarSiguienteBtn) {
+    cancelarSiguienteBtn.addEventListener('click', () => irAPasoCancelar(2));
+  }
+
+  // Modal cancelar: paso 2 → paso 1
+  const cancelarVolverBtn = $('#btn-cancelar-volver');
+  if (cancelarVolverBtn) {
+    cancelarVolverBtn.addEventListener('click', () => irAPasoCancelar(1));
+  }
+
+  // Modal cancelar: paso 2 → ejecuta la cancelación real
   const confirmarCancelarBtn = $('#btn-confirmar-cancelar');
   if (confirmarCancelarBtn) confirmarCancelarBtn.addEventListener('click', confirmarCancelar);
 
