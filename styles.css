@@ -1037,6 +1037,10 @@ button { font-family: inherit; }
   grid-template-columns: repeat(7, minmax(0, 1fr));
   gap: 6px;
   width: 100%;
+  /* Aire extra arriba y a los costados para que los badges de urgencia
+     (que sobresalen de la esquina de cada día) no se corten. */
+  padding: 8px 6px 0;
+  box-sizing: border-box;
 }
 
 .calendario-dia-semana {
@@ -1069,6 +1073,7 @@ button { font-family: inherit; }
   gap: 4px;
   padding: 4px 2px;
   transition: all 0.18s ease;
+  overflow: visible;
 }
 
 /* Día clickeable (no deshabilitado, no vacío) */
@@ -1149,34 +1154,39 @@ button { font-family: inherit; }
 }
 
 /* Badge numérico de urgencia: aparece en la esquina superior derecha
-   del día cuando quedan pocos turnos (≤ 3). Reemplaza visualmente al
-   tooltip al hover, mostrando el número siempre visible. */
+   del día cuando quedan pocos turnos (≤ 3). Sobresale del borde del
+   botón para darle protagonismo visual. */
 .calendario-dia-badge {
   position: absolute;
-  top: 2px;
-  right: 2px;
-  min-width: 16px;
-  height: 16px;
-  padding: 0 4px;
+  top: -8px;
+  right: -8px;
+  z-index: 3;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 6px;
   border-radius: var(--radius-full);
-  background: #d9534f;
+  background: linear-gradient(135deg, #e84a8f, #d81b7a);
   color: var(--blanco);
   font-family: var(--fuente-cuerpo);
-  font-size: 0.62rem;
+  font-size: 0.72rem;
   font-weight: 700;
-  line-height: 16px;
+  line-height: 22px;
   text-align: center;
   pointer-events: none;
-  box-shadow: 0 1px 3px rgba(178, 58, 72, 0.35);
+  box-shadow:
+    0 3px 8px rgba(216, 27, 122, 0.35),
+    0 0 0 2px var(--blanco);
   animation: badgeUrgenciaPop 0.3s ease-out both;
 }
 
 /* Cuando el día está seleccionado, el badge se vuelve dorado
    para mantener contraste sobre el fondo rosa fuerte */
 .calendario-dia.selected .calendario-dia-badge {
-  background: var(--dorado);
+  background: linear-gradient(135deg, var(--dorado), #b8935a);
   color: var(--blanco);
-  box-shadow: 0 1px 3px rgba(201, 168, 106, 0.45);
+  box-shadow:
+    0 3px 8px rgba(201, 168, 106, 0.45),
+    0 0 0 2px var(--blanco);
 }
 
 @keyframes badgeUrgenciaPop {
@@ -1367,11 +1377,13 @@ button { font-family: inherit; }
   }
 
   .calendario-dia-badge {
-    min-width: 14px;
-    height: 14px;
-    font-size: 0.56rem;
-    line-height: 14px;
-    padding: 0 3px;
+    top: -6px;
+    right: -6px;
+    min-width: 18px;
+    height: 18px;
+    font-size: 0.62rem;
+    line-height: 18px;
+    padding: 0 4px;
   }
 }
 
