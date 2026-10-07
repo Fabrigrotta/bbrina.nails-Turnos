@@ -14,6 +14,17 @@ const CONFIG = {
   // Duración por defecto de cada turno (minutos)
   duracionTurno: 60,
 
+  // Zonas donde se atiende (una por turno)
+  // - id: identificador interno (no cambiar sin avisar)
+  // - nombre: cómo se muestra en la UI
+  // - color: color de fondo del número del día en el calendario
+  // - descripcion: texto corto que acompaña al nombre en el selector
+  zonas: [
+    { id: 'alberdi',   nombre: 'Zona Alberdi',             color: '#F9B95C', descripcion: 'Barrio Alberdi' },
+    { id: 'mendoza',   nombre: 'Zona Mendoza 3500',        color: '#96C7B3', descripcion: 'Av. Mendoza 3500' },
+    { id: 'domicilio', nombre: 'Domicilio de la manicura', color: '#6398A9', descripcion: 'En mi casa' }
+  ],
+
   // Servicios disponibles (mockup · editar libremente)
   servicios: [
     { id: 'kapping',       nombre: 'Kapping',           duracion: 90, precio: '$—' },
@@ -54,6 +65,7 @@ window.BBRINA_CONFIG = CONFIG;
    ─────────────────────────────────────────────────────────── */
 const state = {
   servicioSeleccionado: null,
+  zonaSeleccionada: null,
   fechaSeleccionada: null,
   horarioSeleccionado: null,
   codigoEnEdicion: null,
@@ -206,6 +218,33 @@ function ocultarError() {
   el.hidden = true;
 }
 
+/* Devuelve la zona "dueña" de un día (si ya tiene al menos un turno reservado).
+   Si no hay turnos, devuelve null. */
+function zonaDelDia(fechaISO) {
+  const reserva = getReservas().find(r => r.fecha === fechaISO && r.zona);
+  return reserva ? reserva.zona : null;
+}
+
+/* Devuelve el color de una zona por id (o null si no existe) */
+function colorZona(zonaId) {
+  const z = CONFIG.zonas.find(z => z.id === zonaId);
+  return z ? z.color : null;
+}
+
+/* Devuelve el nombre de una zona por id */
+function nombreZona(zonaId) {
+  const z = CONFIG.zonas.find(z => z.id === zonaId);
+  return z ? z.nombre : zonaId;
+}
+
+/* Devuelve true si la fecha seleccionada está anclada a OTRA zona distinta
+   a la que el usuario tiene seleccionada. */
+function diaOcupadoPorOtraZona(fechaISO) {
+  if (!state.zonaSeleccionada) return false;
+  const zonaDia = zonaDelDia(fechaISO);
+  return zonaDia !== null && zonaDia !== state.zonaSeleccionada;
+}
+
 /* ───────────────────────────────────────────────────────────
    RENDER · SERVICIOS
    ─────────────────────────────────────────────────────────── */
@@ -228,6 +267,52 @@ function renderServicios() {
     btn.addEventListener('click', () => seleccionarServicio(serv.id));
     grid.appendChild(btn);
   });
+}
+
+/* ───────────────────────────────────────────────────────────
+   RENDER · ZONAS
+   ─────────────────────────────────────────────────────────── */
+function renderZonas() {
+  const grid = document.getElementById('zonas-grid');
+  if (!grid) return;
+
+  grid.innerHTML = '';
+
+  CONFIG.zonas.forEach(z => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'zona-item';
+    btn.dataset.zona = z.id;
+    btn.innerHTML = `
+      <span class="zona-item-nombre">
+        <span class="zona-item-dot"></span>${z.nombre}
+      </span>
+      <span class="zona-item-desc">${z.descripcion || ''}</span>
+    `;
+
+    if (state.zonaSeleccionada === z.id) {
+      btn.classList.add('selected');
+    }
+
+    btn.addEventListener('click', () => seleccionarZona(z.id));
+    grid.appendChild(btn);
+  });
+}
+
+function seleccionarZona(zonaId) {
+  state.zonaSeleccionada = zonaId;
+  // Al cambiar de zona, la fecha y horario se resetean: puede que la fecha
+  // que tenía elegida ya no sea válida para la nueva zona.
+  state.fechaSeleccionada = null;
+  state.horarioSeleccionado = null;
+  ocultarError();
+  ocultarAvisoZona();
+  renderZonas();
+  renderCalendario();
+  renderHorarios();
+  if (typeof window.actualizarBotonContinuarWizard === 'function') {
+    window.actualizarBotonContinuarWizard();
+  }
 }
 
 function seleccionarServicio(id) {
@@ -267,6 +352,12 @@ function renderHorarios() {
   if (CONFIG.diasNoLaborables.includes(diaSemana)) {
     grid.innerHTML = `<p class="hint">Ese día no atendemos. Probá con otra fecha 💅</p>`;
     state.horarioSeleccionado = null;
+    return;
+  }
+
+  // Si el día está anclado a otra zona, no mostramos horarios
+  if (diaOcupadoPorOtraZona(state.fechaSeleccionada)) {
+    grid.innerHTML = '';
     return;
   }
 
@@ -428,10 +519,17 @@ function renderCalendario() {
       }
     }
 
-    // Número del día
+    // Número del día (envuelto en un span con clase para pintar la zona)
     const num = document.createElement('span');
+    num.className = 'calendario-dia-num';
     num.textContent = dia;
     btn.appendChild(num);
+
+    // Si el día ya está anclado a una zona, guardamos el id para pintarlo
+    const zonaDia = zonaDelDia(fechaISO);
+    if (zonaDia) {
+      btn.dataset.zonaDia = zonaDia;
+    }
 
     // Dot de disponibilidad
     const dot = document.createElement('span');
@@ -494,8 +592,32 @@ function seleccionarFecha(fechaISO) {
   state.fechaSeleccionada = fechaISO;
   state.horarioSeleccionado = null;
   ocultarError();
+
+  // Si el día está anclado a otra zona, mostramos el aviso
+  if (diaOcupadoPorOtraZona(fechaISO)) {
+    const zonaDia = zonaDelDia(fechaISO);
+    mostrarAvisoZona(zonaDia);
+  } else {
+    ocultarAvisoZona();
+  }
+
   renderCalendario();
   renderHorarios();
+  actualizarBotonContinuarWizard();
+}
+
+function mostrarAvisoZona(zonaDia) {
+  const aviso = document.getElementById('zona-aviso');
+  if (!aviso) return;
+
+  const nombre = nombreZona(zonaDia);
+  aviso.innerHTML = `El día que seleccionaste, solo se permiten turnos en <strong>${nombre}</strong>. Podés sacar turno en la misma zona, o elegir otro día.`;
+  aviso.hidden = false;
+}
+
+function ocultarAvisoZona() {
+  const aviso = document.getElementById('zona-aviso');
+  if (aviso) aviso.hidden = true;
 }
 
 function initCalendario() {
@@ -618,10 +740,17 @@ function initTooltipUrgencia() {
    ─────────────────────────────────────────────────────────── */
 function validarFormulario(datos) {
   if (!datos.servicio) return 'Elegí un servicio.';
+  if (!datos.zona) return 'Elegí una zona.';
   if (!datos.fecha) return 'Elegí una fecha.';
   if (!datos.horario) return 'Elegí un horario.';
   if (!datos.nombre || datos.nombre.trim().length < 2) return 'Ingresá tu nombre.';
   if (!datos.whatsapp || datos.whatsapp.replace(/\D/g, '').length < 8) return 'Ingresá un WhatsApp válido.';
+
+  // Si el día está anclado a otra zona, no permitimos reservar
+  const zonaDia = zonaDelDia(datos.fecha);
+  if (zonaDia && zonaDia !== datos.zona) {
+    return `Ese día solo se atiende en ${nombreZona(zonaDia)}. Elegí otro día o esa zona.`;
+  }
 
   const [y, m, d] = datos.fecha.split('-').map(Number);
   const diaSemana = new Date(y, m - 1, d).getDay();
@@ -649,6 +778,7 @@ function armarMensaje(reserva) {
     ``,
     `Quiero reservar un turno:`,
     `• Servicio: ${nombreServ}`,
+    `• Zona: ${nombreZona(reserva.zona)}`,
     `• Fecha: ${formatearFecha(reserva.fecha)}`,
     `• Horario: ${reserva.horario} hs`,
     `• Nombre: ${reserva.nombre}`,
@@ -682,6 +812,7 @@ function mostrarRevision(reserva) {
 
   resumen.textContent =
     `Servicio: ${nombreServ}${duracion}\n` +
+    `Zona: ${nombreZona(reserva.zona)}\n` +
     `Fecha: ${formatearFecha(reserva.fecha)}\n` +
     `Horario: ${reserva.horario} hs\n` +
     `Nombre: ${reserva.nombre}\n` +
@@ -722,6 +853,7 @@ function mostrarReservaExitosa(reserva) {
 
   resumen.textContent =
     `Servicio: ${nombreServ}\n` +
+    `Zona: ${nombreZona(reserva.zona)}\n` +
     `Fecha: ${formatearFecha(reserva.fecha)}\n` +
     `Horario: ${reserva.horario} hs\n` +
     `A nombre de: ${reserva.nombre}` +
@@ -751,6 +883,7 @@ function editarReserva(reservaParam) {
 
   // 2) Precargar el estado con los datos originales
   state.servicioSeleccionado = reserva.servicio;
+  state.zonaSeleccionada = reserva.zona || null;
   state.fechaSeleccionada = reserva.fecha;
   state.horarioSeleccionado = reserva.horario;
   state.codigoEnEdicion = reserva.codigo;
@@ -765,6 +898,7 @@ function editarReserva(reservaParam) {
 
   // 4) Refrescar el wizard con la selección restaurada
   renderServicios();
+  renderZonas();
   renderCalendario();
   renderHorarios();
 
@@ -800,6 +934,7 @@ function resetFormulario() {
   const rev = $('#revision-turno');
 
   state.servicioSeleccionado = null;
+  state.zonaSeleccionada = null;
   state.fechaSeleccionada = null;
   state.horarioSeleccionado = null;
   state.codigoEnEdicion = null;
@@ -815,7 +950,9 @@ function resetFormulario() {
   if (rev) rev.hidden = true;
 
   ocultarError();
+  ocultarAvisoZona();
   renderServicios();
+  renderZonas();
   renderCalendario();
   renderHorarios();
 
@@ -896,7 +1033,12 @@ function initFormulario() {
 
   function pasoEstaCompleto(n) {
     if (n === 1) return !!state.servicioSeleccionado;
-    if (n === 2) return !!state.fechaSeleccionada && !!state.horarioSeleccionado;
+    if (n === 2) {
+      return !!state.zonaSeleccionada
+          && !!state.fechaSeleccionada
+          && !!state.horarioSeleccionado
+          && !diaOcupadoPorOtraZona(state.fechaSeleccionada);
+    }
     if (n === 3) {
       const nombre = $('#input-nombre')?.value.trim() || '';
       const whatsapp = $('#input-whatsapp')?.value.trim() || '';
@@ -952,6 +1094,7 @@ function initFormulario() {
       // Estamos en el último paso → armar reserva y mostrar revisión
       const datos = {
         servicio: state.servicioSeleccionado,
+        zona: state.zonaSeleccionada,
         fecha: state.fechaSeleccionada,
         horario: state.horarioSeleccionado,
         nombre: $('#input-nombre')?.value.trim() || '',
@@ -1069,6 +1212,10 @@ function initFormulario() {
   // cuando se llama desde "Consultar turno".
   window.irAPasoDesdeEdicion = irAPaso;
 
+  // Exponer actualizarBotonContinuar para que seleccionarZona() pueda
+  // refrescar el estado del botón "Continuar".
+  window.actualizarBotonContinuarWizard = actualizarBotonContinuar;
+
   // Mostrar/ocultar bloque de seña según el radio seleccionado
   const radiosSena = $$('input[name="sena"]');
   const bloqueSena = $('#bloque-sena');
@@ -1162,6 +1309,7 @@ function renderConsulta(reservas) {
     resumen.textContent =
       `Código: ${reserva.codigo || '—'}\n` +
       `Servicio: ${nombreServ}\n` +
+      `Zona: ${nombreZona(reserva.zona)}\n` +
       `Fecha: ${formatearFecha(reserva.fecha)}\n` +
       `Horario: ${reserva.horario} hs\n` +
       `A nombre de: ${reserva.nombre}` +
@@ -1438,6 +1586,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   await cargarBloqueos();
 
   renderServicios();
+  renderZonas();
   initCalendario();
   renderHorarios();
   initFormulario();

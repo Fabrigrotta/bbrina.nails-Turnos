@@ -237,8 +237,19 @@
 
           <!-- Paso 2: Fecha y horario -->
           <div class="wizard-paso" data-paso="2" hidden>
-            <h3 class="wizard-paso-titulo">Elegí fecha y horario</h3>
-            <p class="wizard-paso-texto">Elegí el día y después el horario disponible.</p>
+            <h3 class="wizard-paso-titulo">Elegí zona, fecha y horario</h3>
+            <p class="wizard-paso-texto">Primero elegí la zona, después el día y el horario.</p>
+
+            <!-- Selector de zona -->
+            <div class="zona-selector">
+              <label class="zona-selector-label">¿Dónde te vas a hacer las uñas? <span class="req">*</span></label>
+              <div id="zonas-grid" class="zonas-grid">
+                <!-- Render dinámico desde script.js -->
+              </div>
+            </div>
+
+            <!-- Cartel de aviso: día tomado por otra zona -->
+            <p id="zona-aviso" class="zona-aviso" hidden></p>
 
             <div id="calendario" class="calendario">
               <!-- Render dinámico desde script.js -->

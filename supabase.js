@@ -43,6 +43,7 @@ async function guardarReservaSB(reserva) {
     .upsert({
       codigo: reserva.codigo,
       servicio: reserva.servicio,
+      zona: reserva.zona || null,
       fecha: reserva.fecha,
       horario: reserva.horario,
       nombre: reserva.nombre,

@@ -354,8 +354,13 @@ function crearCardReserva(reserva) {
   const body = document.createElement('div');
   body.className = 'admin-card-body';
 
+  // Zona (con su nombre legible)
+  const zonaInfo = CFG.zonas?.find(z => z.id === reserva.zona);
+  const nombreZona = zonaInfo ? zonaInfo.nombre : (reserva.zona || '—');
+
   const lineas = [
     ['Servicio', nombreServicio(reserva.servicio)],
+    ['Zona', nombreZona],
     ['Fecha', formatearFecha(reserva.fecha)],
     ['Horario', `${reserva.horario} hs`],
     ['Nombre', reserva.nombre || '—'],
