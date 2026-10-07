@@ -4045,82 +4045,101 @@ button { font-family: inherit; }
 
 .zona-item {
   display: flex;
-  flex-direction: column;
-  gap: 4px;
-  padding: 14px 16px;
-  border: 1.5px solid var(--rosa-100);
-  background: var(--rosa-50);
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  min-height: 84px;
+  padding: 16px 18px;
+  border: 1.5px solid transparent;
   border-radius: var(--radius-md);
   cursor: pointer;
   transition: all 0.2s ease;
-  text-align: left;
   font-family: inherit;
   position: relative;
+  overflow: hidden;
 }
 
 .zona-item:hover {
-  border-color: var(--rosa-300);
   transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(140, 74, 93, 0.18);
 }
 
 .zona-item.selected {
-  border-color: var(--rosa-500);
-  background: var(--rosa-100);
-  box-shadow: 0 6px 18px rgba(140, 74, 93, 0.16);
+  box-shadow:
+    0 8px 22px rgba(140, 74, 93, 0.25),
+    inset 0 0 0 2.5px var(--rosa-700);
   transform: translateY(-2px);
 }
 
+/* Check ✓ cuando está seleccionada */
 .zona-item.selected::after {
   content: '✓';
   position: absolute;
   top: 10px;
   right: 10px;
-  width: 22px;
-  height: 22px;
+  width: 24px;
+  height: 24px;
   border-radius: 50%;
-  background: linear-gradient(135deg, var(--rosa-500), var(--rosa-700));
+  background: var(--rosa-700);
   color: var(--blanco);
-  font-size: 0.72rem;
+  font-size: 0.78rem;
   font-weight: 700;
   line-height: 1;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 2px 6px rgba(125, 60, 80, 0.3);
+  box-shadow: 0 2px 8px rgba(125, 60, 80, 0.35);
   animation: servicioCheckIn 0.22s ease-out both;
 }
 
-/* Punto de color identificatorio de cada zona */
-.zona-item-dot {
-  display: inline-block;
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  flex-shrink: 0;
-  margin-right: 8px;
-  vertical-align: middle;
-}
-
 .zona-item-nombre {
-  display: flex;
-  align-items: center;
-  font-weight: 700;
-  font-size: 0.95rem;
-  color: var(--rosa-700);
-  line-height: 1.2;
-}
-
-.zona-item-desc {
-  display: block;
-  font-size: 0.75rem;
-  color: var(--texto-soft);
+  font-family: var(--fuente-cuerpo);
+  font-weight: 600;
+  font-size: 1rem;
   line-height: 1.3;
+  letter-spacing: 0;
+  color: inherit;
 }
 
-/* Colores por zona */
-.zona-item[data-zona="alberdi"] .zona-item-dot   { background: #F9B95C; }
-.zona-item[data-zona="mendoza"] .zona-item-dot   { background: #96C7B3; }
-.zona-item[data-zona="domicilio"] .zona-item-dot { background: #6398A9; }
+/* ── Colores por zona: toda la card se pinta ── */
+.zona-item[data-zona="alberdi"] {
+  background: #F9B95C;
+  color: #4a2e00;
+  border-color: #e0a440;
+}
+
+.zona-item[data-zona="alberdi"]:hover {
+  background: #f2a838;
+  border-color: #c98f2a;
+}
+
+.zona-item[data-zona="mendoza"] {
+  background: #96C7B3;
+  color: #1e3d33;
+  border-color: #7aae99;
+}
+
+.zona-item[data-zona="mendoza"]:hover {
+  background: #7fb89f;
+  border-color: #5f9583;
+}
+
+.zona-item[data-zona="domicilio"] {
+  background: #6398A9;
+  color: #000000;
+  border-color: #4d7d8c;
+}
+
+.zona-item[data-zona="domicilio"]:hover {
+  background: #4f8797;
+  border-color: #3d6b78;
+}
+
+/* El check en domicilio (fondo azul) → con fondo blanco y check oscuro */
+.zona-item[data-zona="domicilio"].selected::after {
+  background: var(--blanco);
+  color: #000000;
+}
 
 /* Cartel de aviso: día tomado por otra zona */
 .zona-aviso {
@@ -4211,4 +4230,31 @@ button { font-family: inherit; }
   background: linear-gradient(135deg, #a84062, #6b2e42);
   color: var(--blanco);
   border-color: transparent;
+}
+
+/* Calendario bloqueado: cuando todavía no eligió zona */
+.calendario.calendario-bloqueado {
+  opacity: 0.55;
+  pointer-events: none;
+  filter: grayscale(0.4);
+}
+
+.calendario.calendario-bloqueado .calendario-header {
+  pointer-events: auto;
+  opacity: 1;
+}
+
+/* El cartelito de "elegí zona primero" va DENTRO del contenedor bloqueado,
+   así que lo hacemos visible a pesar del pointer-events: none del padre. */
+.calendario-hint-zona {
+  text-align: center;
+  font-size: 0.85rem;
+  font-style: italic;
+  color: var(--rosa-700);
+  background: var(--rosa-50);
+  border: 1px dashed var(--rosa-300);
+  border-radius: var(--radius-md);
+  padding: 10px 16px;
+  margin: 0 0 16px;
+  font-weight: 500;
 }

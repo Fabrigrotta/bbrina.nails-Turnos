@@ -284,10 +284,7 @@ function renderZonas() {
     btn.className = 'zona-item';
     btn.dataset.zona = z.id;
     btn.innerHTML = `
-      <span class="zona-item-nombre">
-        <span class="zona-item-dot"></span>${z.nombre}
-      </span>
-      <span class="zona-item-desc">${z.descripcion || ''}</span>
+      <span class="zona-item-nombre">${z.nombre}</span>
     `;
 
     if (state.zonaSeleccionada === z.id) {
@@ -446,6 +443,10 @@ function renderCalendario() {
   const anio = mesVisible.getFullYear();
   const mes = mesVisible.getMonth();
 
+  // Si todavía no eligió zona, el calendario no es interactivo.
+  // Aplicamos una clase al contenedor para estilarlo visualmente.
+  cont.classList.toggle('calendario-bloqueado', !state.zonaSeleccionada);
+
   // Header
   const titulo = `${MESES[mes]} ${anio}`;
 
@@ -467,6 +468,11 @@ function renderCalendario() {
         <button type="button" class="calendario-hoy-btn" id="cal-hoy" ${enMesActual ? 'disabled' : ''} aria-label="Ir al mes actual">Hoy</button>
       </div>
     </div>
+    ${!state.zonaSeleccionada ? `
+      <p class="calendario-hint-zona">
+        Elegí primero una zona para ver los días disponibles.
+      </p>
+    ` : ''}
     <div class="calendario-grid">
       ${DIAS_SEMANA.map(d => `<span class="calendario-dia-semana">${d}</span>`).join('')}
     </div>
@@ -500,8 +506,9 @@ function renderCalendario() {
 
     const noLaborable = esDiaNoLaborable(fecha);
     const pasada = esFechaPasada(fecha);
+    const sinZona = !state.zonaSeleccionada;
 
-    if (noLaborable || pasada) {
+    if (noLaborable || pasada || sinZona) {
       btn.disabled = true;
     }
 
@@ -525,25 +532,29 @@ function renderCalendario() {
     num.textContent = dia;
     btn.appendChild(num);
 
-    // Si el día ya está anclado a una zona, guardamos el id para pintarlo
-    const zonaDia = zonaDelDia(fechaISO);
-    if (zonaDia) {
-      btn.dataset.zonaDia = zonaDia;
+    // Si el día ya está anclado a una zona, guardamos el id para pintarlo.
+    // Pero si todavía no eligió zona, no mostramos los colores de zona.
+    if (state.zonaSeleccionada) {
+      const zonaDia = zonaDelDia(fechaISO);
+      if (zonaDia) {
+        btn.dataset.zonaDia = zonaDia;
+      }
     }
 
-    // Dot de disponibilidad
-    const dot = document.createElement('span');
-    dot.className = 'calendario-dot';
-    if (noLaborable || pasada) {
-      dot.classList.add('gris');
-    } else {
-      dot.classList.add(colorDisponibilidad(fechaISO));
+    // Dot de disponibilidad (solo si ya eligió zona)
+    if (state.zonaSeleccionada) {
+      const dot = document.createElement('span');
+      dot.className = 'calendario-dot';
+      if (noLaborable || pasada) {
+        dot.classList.add('gris');
+      } else {
+        dot.classList.add(colorDisponibilidad(fechaISO));
+      }
+      btn.appendChild(dot);
     }
-    btn.appendChild(dot);
 
-    // Badge numérico de urgencia: muestra cuántos turnos quedan
-    // Solo para días con pocos horarios libres (≤ 3)
-    if (btn.classList.contains('calendario-dia-urgente')) {
+    // Badge numérico de urgencia: solo si ya eligió zona
+    if (state.zonaSeleccionada && btn.classList.contains('calendario-dia-urgente')) {
       const badge = document.createElement('span');
       badge.className = 'calendario-dia-badge';
       badge.textContent = btn.dataset.quedan;
