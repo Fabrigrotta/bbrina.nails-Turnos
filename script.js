@@ -296,6 +296,53 @@ function renderZonas() {
   });
 }
 
+/* ───────────────────────────────────────────────────────────
+   RENDER · INFO · Cards de zonas
+   ─────────────────────────────────────────────────────────── */
+/* Ícono de ubicación · el mismo para las 3 zonas */
+const ICONO_UBICACION = `
+  <svg viewBox="0 0 24 24" width="38" height="38" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+    <circle cx="12" cy="10" r="3.2"/>
+  </svg>
+`;
+
+function renderInfoZonas() {
+  const grid = document.getElementById('info-zonas-grid');
+  if (!grid) return;
+
+  grid.innerHTML = '';
+
+  CONFIG.zonas.forEach(z => {
+    const card = document.createElement('article');
+    card.className = 'info-zona-card';
+    card.dataset.zona = z.id;
+    card.style.setProperty('--zona-color', z.color);
+
+    // Ícono grande, sin círculo
+    const icono = document.createElement('span');
+    icono.className = 'info-zona-icono';
+    icono.innerHTML = ICONO_UBICACION;
+    icono.setAttribute('aria-hidden', 'true');
+
+    // Nombre de la zona
+    const nombre = document.createElement('h3');
+    nombre.className = 'info-zona-nombre';
+    nombre.textContent = z.nombre;
+
+    // Franja inferior del color de la zona
+    const franja = document.createElement('span');
+    franja.className = 'info-zona-franja';
+    franja.setAttribute('aria-hidden', 'true');
+
+    card.appendChild(icono);
+    card.appendChild(nombre);
+    card.appendChild(franja);
+
+    grid.appendChild(card);
+  });
+}
+
 function seleccionarZona(zonaId) {
   state.zonaSeleccionada = zonaId;
   // Al cambiar de zona, la fecha y horario se resetean: puede que la fecha
@@ -1598,6 +1645,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   renderServicios();
   renderZonas();
+  renderInfoZonas();
   initCalendario();
   renderHorarios();
   initFormulario();
