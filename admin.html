@@ -14,7 +14,7 @@
   />
 
   <link rel="stylesheet" href="styles.css" />
-    <!-- Favicon SVG inline (variante admin: fondo dorado + puntito verde) -->
+  <!-- Favicon SVG inline (variante admin: fondo dorado + puntito verde) -->
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='32' fill='%23e6d3a8'/%3E%3Ctext x='32' y='43' font-family='Georgia,serif' font-size='34' font-weight='700' fill='%237d3c50' text-anchor='middle'%3Ebb%3C/text%3E%3Ccircle cx='50' cy='14' r='8' fill='%234caf82'/%3E%3C/svg%3E" />
 </head>
 <body>
@@ -55,7 +55,7 @@
           <h3 class="admin-bloque-titulo">Últimos turnos reservados</h3>
           <div class="admin-bloque-acciones">
             <span class="admin-bloque-contador" id="admin-contador-recientes">— reservas</span>
-            <button type="button" id="btn-exportar-csv-todos" class="btn btn-secondary admin-btn-sm">
+            <button type="button" id="btn-exportar-csv" class="btn btn-secondary admin-btn-sm">
               Exportar CSV
             </button>
           </div>
@@ -77,7 +77,7 @@
             <button type="button" id="btn-bloquear-horarios" class="btn btn-secondary admin-btn-sm">
               Bloquear horarios
             </button>
-            <button type="button" id="btn-exportar-csv" class="btn btn-secondary admin-btn-sm">
+            <button type="button" id="btn-exportar-csv-todos" class="btn btn-secondary admin-btn-sm">
               Exportar CSV
             </button>
             <button type="button" id="btn-borrar-todo" class="btn btn-secondary admin-btn-sm admin-btn-danger">
@@ -152,16 +152,42 @@
     </div>
   </main>
 
-  <!-- (Modal de editar viejo eliminado: usamos #modal-editar-datos y #modal-mover) -->
+  <!-- ═══════════════ MODAL EDITAR DATOS DEL CLIENTE ═══════════════ -->
+  <div id="modal-editar-datos" class="modal" hidden>
+    <div class="modal-backdrop" data-close="modal-editar-datos"></div>
+    <div class="modal-card card">
+      <h3 class="modal-titulo">Editar datos del cliente</h3>
+      <p class="modal-subtitulo" id="modal-editar-datos-codigo">—</p>
 
-  <!-- ═══════════════ MODAL EDITAR (ex-Mover) ═══════════════ -->
+      <div class="field">
+        <label for="edit-datos-nombre">Nombre</label>
+        <input type="text" id="edit-datos-nombre" />
+      </div>
+      <div class="field">
+        <label for="edit-datos-whatsapp">WhatsApp</label>
+        <input type="tel" id="edit-datos-whatsapp" />
+      </div>
+      <div class="field">
+        <label for="edit-datos-nota">Nota</label>
+        <textarea id="edit-datos-nota" rows="3"></textarea>
+      </div>
+
+      <p id="edit-datos-error" class="form-error" role="alert" hidden></p>
+
+      <div class="modal-acciones">
+        <button type="button" class="btn btn-secondary" data-close="modal-editar-datos">Cancelar</button>
+        <button type="button" class="btn btn-primary" id="btn-guardar-edicion-datos">Guardar cambios</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════ MODAL MOVER TURNO ═══════════════ -->
   <div id="modal-mover" class="modal" hidden>
     <div class="modal-backdrop" data-close="modal-mover"></div>
     <div class="modal-card card">
-      <h3 class="modal-titulo">Editar turno</h3>
+      <h3 class="modal-titulo">Mover turno</h3>
       <p class="modal-subtitulo" id="modal-mover-codigo">—</p>
 
-      <!-- Info de la reserva actual (nuevo) -->
       <div class="modal-editar-info">
         <div class="modal-editar-info-row">
           <span class="modal-editar-info-key">Clienta</span>
@@ -196,7 +222,7 @@
     <div class="modal-backdrop" data-close="modal-cancelar"></div>
     <div class="modal-card card">
 
-      <!-- ── Paso 1: confirmación inicial ── -->
+      <!-- Paso 1: confirmación inicial -->
       <div class="modal-paso" id="cancelar-paso-1">
         <h3 class="modal-titulo">Cancelar turno</h3>
         <p class="modal-subtitulo" id="modal-cancelar-codigo">—</p>
@@ -208,7 +234,7 @@
         </div>
       </div>
 
-      <!-- ── Paso 2: confirmación final ── -->
+      <!-- Paso 2: confirmación final -->
       <div class="modal-paso" id="cancelar-paso-2" hidden>
         <h3 class="modal-titulo modal-titulo-peligro">Confirmá la cancelación</h3>
         <p class="modal-subtitulo" id="modal-cancelar-info">—</p>
@@ -312,7 +338,7 @@
     </div>
   </div>
 
-  <!-- ═══════════════ MODAL AVISO (reemplaza alert) ═══════════════ -->
+  <!-- ═══════════════ MODAL AVISO ═══════════════ -->
   <div id="modal-aviso" class="modal modal-aviso" hidden>
     <div class="modal-backdrop" data-close="modal-aviso"></div>
     <div class="modal-card card">

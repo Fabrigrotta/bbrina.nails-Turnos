@@ -1,17 +1,21 @@
 /* ═══════════════════════════════════════════════════════════
    bbrina.nails · Turnos — admin.js
-   Panel de reservas · v1 mockup (localStorage)
+   Panel de reservas · v1
    ═══════════════════════════════════════════════════════════ */
 
 (function () {
   'use strict';
-
 
 /* ───────────────────────────────────────────────────────────
    CONFIG · viene de window.BBRINA_CONFIG (script.js)
    ─────────────────────────────────────────────────────────── */
 const CFG = window.BBRINA_CONFIG || {
   whatsapp: '5493413902715',
+  zonas: [
+    { id: 'alberdi',   nombre: 'Zona Alberdi',             color: '#F9B95C' },
+    { id: 'mendoza',   nombre: 'Zona Mendoza 3500',        color: '#96C7B3' },
+    { id: 'domicilio', nombre: 'Domicilio de la manicura', color: '#6398A9' }
+  ],
   servicios: [
     { id: 'semipermanente', nombre: 'Semipermanente', duracion: 60,  precio: '$—' },
     { id: 'capping',        nombre: 'Capping',        duracion: 90,  precio: '$—' },
@@ -46,12 +50,11 @@ const adminState = {
   bloqueoEliminando: null
 };
 
-/* Alias: el resto del archivo usa `state`, que apunta a adminState.
-   (Así no hay que renombrar todas las referencias). */
 const state = adminState;
 
-/* Caché de reservas (capa de compatibilidad con Supabase) */
+/* Cachés */
 let reservasCache = [];
+let bloqueosCache = [];
 
 async function cargarReservas() {
   try {
@@ -63,9 +66,6 @@ async function cargarReservas() {
     reservasCache = [];
   }
 }
-
-/* Caché de bloqueos */
-let bloqueosCache = [];
 
 async function cargarBloqueos() {
   try {
@@ -81,20 +81,15 @@ async function cargarBloqueos() {
 /* ───────────────────────────────────────────────────────────
    HELPERS
    ─────────────────────────────────────────────────────────── */
-
 const $  = (sel) => document.querySelector(sel);
 const $$ = (sel) => document.querySelectorAll(sel);
 
 function getReservas() {
-  // Lee del caché en memoria (sincrónico).
   return reservasCache;
 }
 
 function setReservas(reservas) {
-  // Actualiza el caché local.
   reservasCache = reservas;
-  // Nota: los cambios específicos se mandan a Supabase desde cada función
-  // (guardarEdicion, guardarMover, confirmarCancelar, confirmarBorrarTodo).
 }
 
 function getFechaISO(date = new Date()) {
@@ -128,6 +123,11 @@ function nombreServicio(id) {
   return s ? s.nombre : id;
 }
 
+function nombreZona(id) {
+  const z = (CFG.zonas || []).find(z => z.id === id);
+  return z ? z.nombre : (id || '—');
+}
+
 function horarioOcupado(fechaISO, horario, ignorarCodigo = null) {
   const ignorar = normalizarCodigo(ignorarCodigo);
   return getReservas().some(r =>
@@ -140,7 +140,6 @@ function horarioOcupado(fechaISO, horario, ignorarCodigo = null) {
 /* ───────────────────────────────────────────────────────────
    AUTH · guard de sesión (el login vive en index.html)
    ─────────────────────────────────────────────────────────── */
-
 function estaLogueado() {
   return sessionStorage.getItem(ADMIN_CONFIG.authKey) === '1';
 }
@@ -159,14 +158,12 @@ function initLogout() {
     return;
   }
 
-  // El botón del header abre el modal de confirmación
   btn.addEventListener('click', (e) => {
     e.preventDefault();
     e.stopPropagation();
     abrirModal('modal-logout');
   });
 
-  // El botón del modal confirma y cierra sesión
   if (btnConfirmar) {
     btnConfirmar.addEventListener('click', () => {
       cerrarSesion();
@@ -209,14 +206,12 @@ function initBuscador() {
   const btnLimpiar = document.getElementById('admin-buscar-limpiar');
   if (!input) return;
 
-  // Input de búsqueda
   input.addEventListener('input', () => {
     state.busqueda = input.value;
     if (btnLimpiar) btnLimpiar.hidden = !input.value;
     renderTodo();
   });
 
-  // Botón limpiar
   if (btnLimpiar) {
     btnLimpiar.addEventListener('click', () => {
       input.value = '';
@@ -248,7 +243,6 @@ function filtrarReservas(reservas) {
     filtradas = filtradas.filter(r => r.servicio === state.filtroServicio);
   }
 
-  // Filtro por búsqueda (nombre, whatsapp o código)
   if (state.busqueda) {
     const q = state.busqueda.toLowerCase().trim();
     const qDigitos = q.replace(/\D/g, '');
@@ -258,12 +252,10 @@ function filtrarReservas(reservas) {
       const whatsapp = (r.whatsapp || '').replace(/\D/g, '');
       const codigo = (r.codigo || '').replace(/\D/g, '').padStart(6, '0');
 
-      // Si el usuario tipeó solo dígitos, buscamos en whatsapp y código
       if (qDigitos && !/[a-záéíóúñ]/i.test(q)) {
         return whatsapp.includes(qDigitos) || codigo.includes(qDigitos);
       }
 
-      // Si hay texto, buscamos en nombre
       return nombre.includes(q);
     });
   }
@@ -275,7 +267,6 @@ function getRangoSemanaActual() {
   const hoy = new Date();
   hoy.setHours(0, 0, 0, 0);
   const diaSemana = hoy.getDay();
-
   const offsetLunes = (diaSemana === 0 ? -6 : 1 - diaSemana);
 
   const lunes = new Date(hoy);
@@ -328,7 +319,6 @@ function crearCardReserva(reserva) {
   } else if (esPasada) {
     badge.textContent = 'Pasada';
   } else {
-    // Calcular cuántos días faltan para el turno
     const [y, m, d] = reserva.fecha.split('-').map(Number);
     const fechaReserva = new Date(y, m - 1, d);
     const hoy = new Date();
@@ -356,20 +346,15 @@ function crearCardReserva(reserva) {
   const body = document.createElement('div');
   body.className = 'admin-card-body';
 
-  // Zona (con su nombre legible)
-  const zonaInfo = CFG.zonas?.find(z => z.id === reserva.zona);
-  const nombreZona = zonaInfo ? zonaInfo.nombre : (reserva.zona || '—');
-
   const lineas = [
     ['Servicio', nombreServicio(reserva.servicio)],
-    ['Zona', nombreZona],
+    ['Zona', nombreZona(reserva.zona)],
     ['Fecha', formatearFecha(reserva.fecha)],
     ['Horario', `${reserva.horario} hs`],
     ['Nombre', reserva.nombre || '—'],
     ['WhatsApp', reserva.whatsapp || '—']
   ];
 
-  // Seña (si aplica)
   if (reserva.sena_monto) {
     lineas.push(['Seña', `$${reserva.sena_monto}`]);
   }
@@ -413,11 +398,17 @@ function crearCardReserva(reserva) {
   const acciones = document.createElement('div');
   acciones.className = 'admin-card-acciones';
 
-  const btnEditar = document.createElement('button');
-  btnEditar.type = 'button';
-  btnEditar.className = 'btn btn-secondary admin-btn-sm';
-  btnEditar.textContent = 'Editar';
-  btnEditar.addEventListener('click', () => abrirMover(reserva.codigo));
+  const btnEditarDatos = document.createElement('button');
+  btnEditarDatos.type = 'button';
+  btnEditarDatos.className = 'btn btn-secondary admin-btn-sm';
+  btnEditarDatos.textContent = 'Editar datos';
+  btnEditarDatos.addEventListener('click', () => abrirEditarDatos(reserva.codigo));
+
+  const btnMover = document.createElement('button');
+  btnMover.type = 'button';
+  btnMover.className = 'btn btn-secondary admin-btn-sm';
+  btnMover.textContent = 'Mover';
+  btnMover.addEventListener('click', () => abrirMover(reserva.codigo));
 
   const btnCancelar = document.createElement('button');
   btnCancelar.type = 'button';
@@ -425,7 +416,8 @@ function crearCardReserva(reserva) {
   btnCancelar.textContent = 'Cancelar';
   btnCancelar.addEventListener('click', () => abrirCancelar(reserva.codigo));
 
-  acciones.appendChild(btnEditar);
+  acciones.appendChild(btnEditarDatos);
+  acciones.appendChild(btnMover);
   acciones.appendChild(btnCancelar);
 
   card.appendChild(acciones);
@@ -510,7 +502,6 @@ function crearCardBloqueo(bloqueo) {
     card.classList.add('admin-bloqueo-card-completo');
   }
 
-  // Header: fecha + badge
   const header = document.createElement('div');
   header.className = 'admin-bloqueo-header';
 
@@ -532,7 +523,6 @@ function crearCardBloqueo(bloqueo) {
   header.appendChild(badge);
   card.appendChild(header);
 
-  // Horarios
   if (Array.isArray(bloqueo.horarios) && bloqueo.horarios.length > 0) {
     const horarios = document.createElement('div');
     horarios.className = 'admin-bloqueo-horarios';
@@ -545,7 +535,6 @@ function crearCardBloqueo(bloqueo) {
     card.appendChild(horarios);
   }
 
-  // Nota
   if (bloqueo.nota) {
     const nota = document.createElement('p');
     nota.className = 'admin-bloqueo-nota';
@@ -553,7 +542,6 @@ function crearCardBloqueo(bloqueo) {
     card.appendChild(nota);
   }
 
-  // Botón eliminar
   const acciones = document.createElement('div');
   acciones.className = 'admin-bloqueo-acciones';
 
@@ -586,7 +574,6 @@ function renderBloqueos() {
   if (vacio) vacio.hidden = true;
   if (contador) contador.textContent = `${bloqueosCache.length} ${bloqueosCache.length === 1 ? 'bloqueo' : 'bloqueos'}`;
 
-  // Ordenar por fecha ascendente
   const ordenados = [...bloqueosCache].sort((a, b) => {
     if (a.fecha !== b.fecha) return a.fecha < b.fecha ? -1 : 1;
     return 0;
@@ -607,8 +594,6 @@ function cerrarModal(id) {
   const m = document.getElementById(id);
   if (m) m.hidden = true;
 
-  // Si estamos cerrando el modal de cancelar, reseteamos al paso 1
-  // para que la próxima vez que se abra arranque limpio.
   if (id === 'modal-cancelar') {
     irAPasoCancelar(1);
   }
@@ -620,40 +605,87 @@ function initModales() {
   });
 }
 
-/* (Las funciones abrirEditar / guardarEdicion viejas fueron eliminadas.
-   Ahora usamos abrirEditarDatos / guardarEdicionDatos, definidas más abajo.) */
+/* ───────────────────────────────────────────────────────────
+   EDITAR DATOS DEL CLIENTE
+   ─────────────────────────────────────────────────────────── */
+function abrirEditarDatos(codigo) {
+  const reserva = buscarPorCodigo(codigo);
+  if (!reserva) return;
+  state.reservaEditando = reserva;
+
+  $('#modal-editar-datos-codigo').textContent = `#${reserva.codigo}`;
+  $('#edit-datos-nombre').value = reserva.nombre || '';
+  $('#edit-datos-whatsapp').value = reserva.whatsapp || '';
+  $('#edit-datos-nota').value = reserva.nota || '';
+  const err = $('#edit-datos-error');
+  if (err) err.hidden = true;
+
+  abrirModal('modal-editar-datos');
+}
+
+function guardarEdicionDatos() {
+  const reserva = state.reservaEditando;
+  if (!reserva) return;
+
+  const nombre = $('#edit-datos-nombre')?.value.trim() || '';
+  const whatsapp = $('#edit-datos-whatsapp')?.value.trim() || '';
+  const nota = $('#edit-datos-nota')?.value.trim() || '';
+  const err = $('#edit-datos-error');
+
+  if (nombre.length < 2) {
+    if (err) { err.textContent = 'Nombre inválido.'; err.hidden = false; }
+    return;
+  }
+  if (whatsapp.replace(/\D/g, '').length < 8) {
+    if (err) { err.textContent = 'WhatsApp inválido.'; err.hidden = false; }
+    return;
+  }
+
+  const datosNuevos = { nombre, whatsapp, nota };
+  const todas = getReservas();
+  const cod = normalizarCodigo(reserva.codigo);
+
+  const nuevas = todas.map(r =>
+    normalizarCodigo(r.codigo) === cod
+      ? { ...r, ...datosNuevos }
+      : r
+  );
+  setReservas(nuevas);
+
+  window.SB.actualizarReserva(reserva.codigo, datosNuevos)
+    .catch(err => console.error('[Supabase] Error al editar datos:', err));
+
+  state.reservaEditando = null;
+  cerrarModal('modal-editar-datos');
+  renderTodo();
+}
 
 /* ───────────────────────────────────────────────────────────
-   MOVER
+   MOVER TURNO
    ─────────────────────────────────────────────────────────── */
 function abrirMover(codigo) {
   const reserva = buscarPorCodigo(codigo);
   if (!reserva) return;
   state.reservaMoviendo = reserva;
 
-  // Código de reserva
   $('#modal-mover-codigo').textContent = `#${reserva.codigo}`;
 
-  // Nombre de la clienta (nuevo)
   const infoCliente = $('#modal-mover-cliente');
   if (infoCliente) {
     infoCliente.textContent = `${reserva.nombre || '—'} · ${reserva.whatsapp || '—'}`;
   }
 
-  // Resumen de la reserva actual (nuevo)
   const infoActual = $('#modal-mover-actual');
   if (infoActual) {
     infoActual.textContent = `Actualmente: ${formatearFecha(reserva.fecha)} · ${reserva.horario} hs`;
   }
 
-  // Fecha
   const inputFecha = $('#mover-fecha');
   if (inputFecha) {
     inputFecha.min = getFechaISO();
     inputFecha.value = reserva.fecha;
   }
 
-  // Horario
   const selectHorario = $('#mover-horario');
   if (selectHorario) {
     selectHorario.innerHTML = '';
@@ -690,12 +722,10 @@ function guardarMover() {
     return;
   }
 
-  // Guardamos los datos originales para el mensaje del aviso
   const fechaOriginal = reserva.fecha;
   const horarioOriginal = reserva.horario;
   const codigoReserva = reserva.codigo;
 
-  // Actualizamos el caché local
   const todas = getReservas();
   const cod = normalizarCodigo(reserva.codigo);
   const nuevas = todas.map(r =>
@@ -709,7 +739,6 @@ function guardarMover() {
   cerrarModal('modal-mover');
   renderTodo();
 
-  // Sincronizamos con Supabase y mostramos aviso según el resultado
   window.SB.actualizarReserva(codigoReserva, { fecha, horario })
     .then(result => {
       if (result) {
@@ -744,25 +773,20 @@ function abrirCancelar(codigo) {
   if (!reserva) return;
   state.reservaCancelando = reserva;
 
-  // Paso 1: código + nombre
   const codigoEl = document.getElementById('modal-cancelar-codigo');
   if (codigoEl) {
     codigoEl.textContent = `#${reserva.codigo} · ${reserva.nombre || ''}`;
   }
 
-  // Paso 2: info que se muestra en la confirmación final
   const infoEl = document.getElementById('modal-cancelar-info');
   if (infoEl) {
     infoEl.textContent = `Turno #${reserva.codigo} · ${reserva.nombre || '—'} · ${formatearFecha(reserva.fecha)} a las ${reserva.horario} hs`;
   }
 
-  // Siempre arrancamos en el paso 1
   irAPasoCancelar(1);
-
   abrirModal('modal-cancelar');
 }
 
-/* Muestra un paso del modal de cancelar y oculta el otro */
 function irAPasoCancelar(paso) {
   const paso1 = document.getElementById('cancelar-paso-1');
   const paso2 = document.getElementById('cancelar-paso-2');
@@ -775,13 +799,11 @@ function confirmarCancelar() {
   const reserva = state.reservaCancelando;
   if (!reserva) return;
 
-  // Guardamos los datos para el mensaje del aviso
   const codigoReserva = reserva.codigo;
   const fechaReserva = reserva.fecha;
   const horarioReserva = reserva.horario;
   const nombreClienta = reserva.nombre || '—';
 
-  // Actualizamos el caché local
   const todas = getReservas();
   const cod = normalizarCodigo(reserva.codigo);
   const nuevas = todas.filter(r => normalizarCodigo(r.codigo) !== cod);
@@ -791,7 +813,6 @@ function confirmarCancelar() {
   cerrarModal('modal-cancelar');
   renderTodo();
 
-  // Sincronizamos con Supabase y mostramos aviso según el resultado
   window.SB.borrarReserva(codigoReserva)
     .then(ok => {
       if (ok) {
@@ -821,7 +842,6 @@ function confirmarCancelar() {
 /* ───────────────────────────────────────────────────────────
    BLOQUEAR HORARIOS · modal
    ─────────────────────────────────────────────────────────── */
-
 function poblarCheckboxesHorarios() {
   const cont = document.getElementById('bloquear-horarios-grid');
   if (!cont) return;
@@ -849,8 +869,6 @@ function abrirModalBloquear() {
   const modal = document.getElementById('modal-bloquear');
   if (!modal) return;
 
-  // Refrescar bloqueos desde Supabase antes de abrir
-  // (para evitar duplicados si se crearon en otra pestaña)
   window.SB.getBloqueos().then(data => {
     if (Array.isArray(data)) bloqueosCache = data;
     _abrirModalBloquearAhora();
@@ -864,7 +882,6 @@ function _abrirModalBloquearAhora() {
   const modal = document.getElementById('modal-bloquear');
   if (!modal) return;
 
-  // Resetear
   const inputFecha = document.getElementById('bloquear-fecha');
   const inputNota = document.getElementById('bloquear-nota');
   const err = document.getElementById('bloquear-error');
@@ -878,22 +895,15 @@ function _abrirModalBloquearAhora() {
 
   poblarCheckboxesHorarios();
 
-  // Al cambiar la fecha, actualizar los checkboxes y la nota
-  // según si ya existe un bloqueo para esa fecha.
   if (inputFecha) {
-    // Removemos listener previo (por si lo abren varias veces)
     inputFecha.onchange = null;
     inputFecha.onchange = () => cargarBloqueoExistente(inputFecha.value);
-    // Cargar el de hoy (o el que esté por defecto)
     cargarBloqueoExistente(inputFecha.value);
   }
 
-  // Refrescar caché mientras el modal está abierto
-  // (para que cargarBloqueoExistente use datos frescos)
   window.SB.getBloqueos().then(data => {
     if (Array.isArray(data)) {
       bloqueosCache = data;
-      // Re-evaluar el bloqueo existente con datos frescos
       if (inputFecha) cargarBloqueoExistente(inputFecha.value);
     }
   }).catch(e => console.warn('[admin] No se pudo refrescar bloqueos:', e));
@@ -901,37 +911,29 @@ function _abrirModalBloquearAhora() {
   abrirModal('modal-bloquear');
 }
 
-/* Si hay un bloqueo para esa fecha, pre-carga los checkboxes y la nota.
-   Si no, limpia todo. */
 function cargarBloqueoExistente(fecha) {
   const inputNota = document.getElementById('bloquear-nota');
   const checkboxes = document.querySelectorAll('#bloquear-horarios-grid input[type="checkbox"]');
 
-  // Buscar TODOS los bloqueos para esa fecha (puede haber duplicados)
   const existentes = bloqueosCache.filter(b => b.fecha === fecha);
 
   if (existentes.length > 0) {
-    // Combinar los horarios de TODOS los bloqueos de esa fecha
     const horariosBloqueados = new Set();
     existentes.forEach(b => {
       (b.horarios || []).forEach(h => horariosBloqueados.add(h));
     });
 
-    // Pre-marcar los horarios
     checkboxes.forEach(cb => {
       cb.checked = horariosBloqueados.has(cb.value);
     });
 
-    // Cargar la nota del primero que tenga nota
     const conNota = existentes.find(b => b.nota);
     if (inputNota) inputNota.value = conNota ? conNota.nota : '';
   } else {
-    // Limpiar todo
     checkboxes.forEach(cb => { cb.checked = false; });
     if (inputNota) inputNota.value = '';
   }
 
-  // Actualizar el título del modal
   actualizarTituloModalBloqueo(existentes.length > 0 ? existentes[0] : null);
 }
 
@@ -969,19 +971,15 @@ async function confirmarBloqueo() {
     return;
   }
 
-  // Recolectar horarios seleccionados
   const checkboxes = document.querySelectorAll('#bloquear-horarios-grid input[type="checkbox"]:checked');
   const horarios = Array.from(checkboxes).map(cb => cb.value);
 
-  // Feedback visual
   const btn = document.getElementById('btn-confirmar-bloqueo');
   if (btn) {
     btn.disabled = true;
     btn.textContent = 'Guardando...';
   }
 
-  // Refrescar bloqueos desde Supabase antes de operar
-  // (por si se crearon desde otra pestaña o el caché está desactualizado)
   try {
     const bloqueosFrescos = await window.SB.getBloqueos();
     if (Array.isArray(bloqueosFrescos)) {
@@ -991,12 +989,10 @@ async function confirmarBloqueo() {
     console.warn('[admin] No se pudo refrescar bloqueos:', e);
   }
 
-  // Buscar TODOS los bloqueos de esa fecha (puede haber duplicados)
   const existentes = bloqueosCache.filter(b => b.fecha === fecha);
 
   // CASO 1: sin horarios y existen bloqueos → BORRAR TODOS
   if (!horarios.length && existentes.length > 0) {
-    // Borrar todos los bloqueos de esa fecha (por las dudas haya duplicados)
     const resultados = await Promise.all(
       existentes.map(b => window.SB.borrarBloqueo(b.id))
     );
@@ -1025,9 +1021,7 @@ async function confirmarBloqueo() {
     return;
   }
 
-  // CASO 2: sin horarios y NO existe bloqueo → simplemente no hacer nada
-  // (el usuario deseleccionó todo en un día que no tenía bloqueo,
-  // no hay nada que guardar ni borrar)
+  // CASO 2: sin horarios y NO existe bloqueo → nada que hacer
   if (!horarios.length) {
     if (btn) {
       btn.disabled = false;
@@ -1044,20 +1038,15 @@ async function confirmarBloqueo() {
   let accion;
 
   if (existentes.length > 0) {
-    // Si hay duplicados, primero eliminamos todos los que sobren
-    // (nos quedamos con el primero para actualizarlo)
     const principal = existentes[0];
     const duplicados = existentes.slice(1);
 
     if (duplicados.length > 0) {
-      // Borrar los duplicados en paralelo
       await Promise.all(duplicados.map(b => window.SB.borrarBloqueo(b.id)));
-      // Quitarlos del caché
       const idsDuplicados = new Set(duplicados.map(b => b.id));
       bloqueosCache = bloqueosCache.filter(b => !idsDuplicados.has(b.id));
     }
 
-    // Actualizar el principal
     result = await window.SB.actualizarBloqueo(principal.id, {
       horarios,
       tipo,
@@ -1070,7 +1059,6 @@ async function confirmarBloqueo() {
       if (idx >= 0) bloqueosCache[idx] = result;
     }
   } else {
-    // Crear nuevo
     result = await window.SB.crearBloqueo({
       fecha,
       horarios,
@@ -1109,8 +1097,8 @@ async function confirmarBloqueo() {
     tipo: 'success'
   });
 }
+
 function eliminarBloqueo(bloqueo) {
-  // Guardamos el bloqueo y abrimos el modal de confirmación
   state.bloqueoEliminando = bloqueo;
 
   const subtitulo = document.getElementById('modal-eliminar-bloqueo-fecha');
@@ -1150,7 +1138,6 @@ async function confirmarEliminarBloqueo() {
     return;
   }
 
-  // Actualizar caché
   bloqueosCache = bloqueosCache.filter(b => b.id !== bloqueo.id);
   renderBloqueos();
 
@@ -1224,7 +1211,6 @@ function abrirBorrarTodo() {
   if (acc2) acc2.hidden = true;
 
   generarCaptcha();
-
   abrirModal('modal-borrar-todo');
 }
 
@@ -1286,7 +1272,6 @@ function mostrarAviso({ titulo, texto, tipo = 'success' }) {
   const textoEl = document.getElementById('modal-aviso-texto');
   if (!modal || !tituloEl || !textoEl) return;
 
-  // Resetear clases de tipo
   modal.classList.remove(
     'modal-aviso-success',
     'modal-aviso-warning',
@@ -1294,7 +1279,6 @@ function mostrarAviso({ titulo, texto, tipo = 'success' }) {
   );
   modal.classList.add(`modal-aviso-${tipo}`);
 
-  // Ícono según tipo
   if (icono) {
     if (tipo === 'success') {
       icono.innerHTML = '<svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
@@ -1329,7 +1313,6 @@ function confirmarBorrarTodo() {
 
   setReservas([]);
 
-  // Sincronizar con Supabase
   window.SB.borrarTodasLasReservas()
     .catch(err => console.error('[Supabase] Error al borrar todo:', err));
 
@@ -1409,6 +1392,7 @@ function exportarCSV() {
   const encabezados = [
     'Código',
     'Servicio',
+    'Zona',
     'Fecha',
     'Horario',
     'Nombre',
@@ -1420,6 +1404,7 @@ function exportarCSV() {
   const filas = reservas.map(r => {
     const serv = CFG.servicios.find(s => s.id === r.servicio);
     const nombreServ = serv ? serv.nombre : (r.servicio || '');
+    const zona = nombreZona(r.zona);
     const creada = r.creadaEn
       ? new Date(r.creadaEn).toLocaleString('es-AR', {
           day: '2-digit', month: '2-digit', year: 'numeric',
@@ -1430,6 +1415,7 @@ function exportarCSV() {
     return [
       r.codigo || '',
       nombreServ,
+      zona,
       r.fecha || '',
       r.horario || '',
       r.nombre || '',
@@ -1467,19 +1453,16 @@ function initBotones() {
   const guardarMoverBtn = $('#btn-guardar-mover');
   if (guardarMoverBtn) guardarMoverBtn.addEventListener('click', guardarMover);
 
-  // Modal cancelar: paso 1 → paso 2
   const cancelarSiguienteBtn = $('#btn-cancelar-siguiente');
   if (cancelarSiguienteBtn) {
     cancelarSiguienteBtn.addEventListener('click', () => irAPasoCancelar(2));
   }
 
-  // Modal cancelar: paso 2 → paso 1
   const cancelarVolverBtn = $('#btn-cancelar-volver');
   if (cancelarVolverBtn) {
     cancelarVolverBtn.addEventListener('click', () => irAPasoCancelar(1));
   }
 
-  // Modal cancelar: paso 2 → ejecuta la cancelación real
   const confirmarCancelarBtn = $('#btn-confirmar-cancelar');
   if (confirmarCancelarBtn) confirmarCancelarBtn.addEventListener('click', confirmarCancelar);
 
@@ -1504,7 +1487,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     return;
   }
 
-  // Cargar reservas Y bloqueos desde Supabase ANTES de inicializar
   await cargarReservas();
   await cargarBloqueos();
 

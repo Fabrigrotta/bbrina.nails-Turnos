@@ -4,9 +4,8 @@
    ═══════════════════════════════════════════════════════════ */
 
 /* ───────────────────────────────────────────────────────────
-   CONFIGURACIÓN · Pegá acá tus credenciales de Supabase
-   ═══════════════════════════════════════════════════════════ */
-
+   CONFIGURACIÓN · Credenciales de Supabase
+   ─────────────────────────────────────────────────────────── */
 const SUPABASE_URL = 'https://mkzsraiflmhdecwbdslz.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_wpew9F3E6G2f24Yvw9a1zQ_uDe_IicY';
 
@@ -16,11 +15,10 @@ const SUPABASE_ANON_KEY = 'sb_publishable_wpew9F3E6G2f24Yvw9a1zQ_uDe_IicY';
 const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 /* ───────────────────────────────────────────────────────────
-   FUNCIONES CRUD
+   FUNCIONES CRUD · RESERVAS
    ─────────────────────────────────────────────────────────── */
 
-/* Devuelve TODAS las reservas (array).
-   Uso: const reservas = await getReservasSB(); */
+/* Devuelve TODAS las reservas (array). */
 async function getReservasSB() {
   const { data, error } = await supabaseClient
     .from('reservas')
@@ -35,8 +33,7 @@ async function getReservasSB() {
   return data || [];
 }
 
-/* Guarda una reserva nueva (o reemplaza si ya existe el código).
-   Uso: await guardarReservaSB({ codigo, servicio, fecha, ... }); */
+/* Guarda una reserva nueva (o reemplaza si ya existe el código). */
 async function guardarReservaSB(reserva) {
   const { data, error } = await supabaseClient
     .from('reservas')
@@ -63,8 +60,7 @@ async function guardarReservaSB(reserva) {
   return data;
 }
 
-/* Actualiza una reserva existente por código.
-   Uso: await actualizarReservaSB('123456', { nombre: 'Nuevo', ... }); */
+/* Actualiza una reserva existente por código. */
 async function actualizarReservaSB(codigo, cambios) {
   const { data, error } = await supabaseClient
     .from('reservas')
@@ -81,8 +77,7 @@ async function actualizarReservaSB(codigo, cambios) {
   return data;
 }
 
-/* Borra una reserva por código.
-   Uso: await borrarReservaSB('123456'); */
+/* Borra una reserva por código. */
 async function borrarReservaSB(codigo) {
   const { error } = await supabaseClient
     .from('reservas')
@@ -97,10 +92,8 @@ async function borrarReservaSB(codigo) {
   return true;
 }
 
-/* Borra TODAS las reservas.
-   Uso: await borrarTodasLasReservasSB(); */
+/* Borra TODAS las reservas. */
 async function borrarTodasLasReservasSB() {
-  // Supabase requiere un WHERE para DELETE, pero con esto borra todo:
   const { error } = await supabaseClient
     .from('reservas')
     .delete()
@@ -114,13 +107,11 @@ async function borrarTodasLasReservasSB() {
   return true;
 }
 
-/* Busca reservas por whatsapp + código (para "Consultar turno").
-   Uso: const encontradas = await buscarReservasSB('3415922559', '123456'); */
+/* Busca reservas por whatsapp + código. */
 async function buscarReservasSB(whatsapp, codigo) {
   const telNorm = (whatsapp || '').replace(/\D/g, '');
   const codNorm = (codigo || '').replace(/\D/g, '').padStart(6, '0');
 
-  // Traemos todas y filtramos en JS (más simple que pelear con la query)
   const todas = await getReservasSB();
 
   return todas.filter(r => {
@@ -130,12 +121,14 @@ async function buscarReservasSB(whatsapp, codigo) {
   });
 }
 
-/* Sube un comprobante al Storage y devuelve la URL pública.
-   Uso: const url = await subirComprobanteSB(file); */
+/* ───────────────────────────────────────────────────────────
+   COMPROBANTES · Storage
+   ─────────────────────────────────────────────────────────── */
+
+/* Sube un comprobante al Storage y devuelve la URL pública. */
 async function subirComprobanteSB(file) {
   if (!file) return null;
 
-  // Generar nombre único: timestamp + nombre original sanitizado
   const timestamp = Date.now();
   const nombreLimpio = file.name.replace(/[^a-zA-Z0-9.]/g, '_');
   const path = `${timestamp}_${nombreLimpio}`;
@@ -153,7 +146,6 @@ async function subirComprobanteSB(file) {
     return null;
   }
 
-  // Obtener URL pública
   const { data: urlData } = supabaseClient
     .storage
     .from('comprobantes')
@@ -166,8 +158,7 @@ async function subirComprobanteSB(file) {
    BLOQUEOS DE HORARIOS
    ─────────────────────────────────────────────────────────── */
 
-/* Devuelve todos los bloqueos.
-   Uso: const bloqueos = await getBloqueosSB(); */
+/* Devuelve todos los bloqueos. */
 async function getBloqueosSB() {
   const { data, error } = await supabaseClient
     .from('bloqueos')
@@ -182,8 +173,7 @@ async function getBloqueosSB() {
   return data || [];
 }
 
-/* Crea un bloqueo nuevo.
-   Uso: await crearBloqueoSB({ fecha, horarios, tipo, nota }); */
+/* Crea un bloqueo nuevo. */
 async function crearBloqueoSB(bloqueo) {
   const { data, error } = await supabaseClient
     .from('bloqueos')
@@ -204,8 +194,7 @@ async function crearBloqueoSB(bloqueo) {
   return data;
 }
 
-/* Actualiza un bloqueo por id.
-   Uso: await actualizarBloqueoSB(1, { horarios: [...], tipo: 'completo' }); */
+/* Actualiza un bloqueo por id. */
 async function actualizarBloqueoSB(id, cambios) {
   const { data, error } = await supabaseClient
     .from('bloqueos')
@@ -222,8 +211,7 @@ async function actualizarBloqueoSB(id, cambios) {
   return data;
 }
 
-/* Borra un bloqueo por id.
-   Uso: await borrarBloqueoSB(1); */
+/* Borra un bloqueo por id. */
 async function borrarBloqueoSB(id) {
   const { error } = await supabaseClient
     .from('bloqueos')
@@ -238,8 +226,7 @@ async function borrarBloqueoSB(id) {
   return true;
 }
 
-/* Borra TODOS los bloqueos.
-   Uso: await borrarTodosLosBloqueosSB(); */
+/* Borra TODOS los bloqueos. */
 async function borrarTodosLosBloqueosSB() {
   const { error } = await supabaseClient
     .from('bloqueos')

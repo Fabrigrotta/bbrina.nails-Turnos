@@ -8,7 +8,6 @@
    ─────────────────────────────────────────────────────────── */
 const CONFIG = {
   // Número de WhatsApp en formato internacional SIN "+" ni espacios.
-  // Ejemplo Argentina: 5491123456789
   whatsapp: '5493413902715',
 
   // Duración por defecto de cada turno (minutos)
@@ -44,15 +43,14 @@ const CONFIG = {
   // Días no laborables (0 = domingo, 6 = sábado). Por ahora domingo.
   diasNoLaborables: [0],
 
-  // Textos de la marca (por si después querés cambiarlos desde acá)
+  // Textos de la marca
   marca: 'bbrina.nails',
   subMarca: 'Turnos',
 
   // Umbrales de disponibilidad (porcentaje de horarios LIBRES)
-  // Verde ≥ alto, amarillo entre medio y alto, rojo < medio
   umbralDisponibilidad: {
-    verde: 60,     // ≥ 60% libres → verde
-    amarillo: 30   // ≥ 30% libres → amarillo · menos → rojo
+    verde: 60,
+    amarillo: 30
   },
 
   // Storage key para las reservas
@@ -60,7 +58,7 @@ const CONFIG = {
 };
 
 /* Exponer CONFIG a nivel global para que admin.js (u otros scripts)
-   puedan leerlo sin duplicar datos. Se accede como window.BBRINA_CONFIG. */
+   puedan leerlo sin duplicar datos. */
 window.BBRINA_CONFIG = CONFIG;
 
 /* ───────────────────────────────────────────────────────────
@@ -76,10 +74,8 @@ const state = {
 };
 
 /* ───────────────────────────────────────────────────────────
-   CACHÉ DE RESERVAS · capa de compatibilidad con Supabase
-   ───────────────────────────────────────────────────────────
-   Mantenemos las reservas en memoria para que getReservas() siga
-   siendo sincrónico. Al cargar la página se llena desde Supabase. */
+   CACHÉ DE RESERVAS
+   ─────────────────────────────────────────────────────────── */
 
 let reservasCache = [];
 
@@ -94,7 +90,7 @@ async function cargarReservas() {
   }
 }
 
-/* Caché de bloqueos · se llena desde Supabase al cargar la página */
+/* Caché de bloqueos */
 let bloqueosCache = [];
 
 async function cargarBloqueos() {
@@ -115,8 +111,6 @@ const $  = (sel) => document.querySelector(sel);
 const $$ = (sel) => document.querySelectorAll(sel);
 
 function getReservas() {
-  // Devuelve el caché en memoria (sincrónico).
-  // Se llena al cargar la página con cargarReservas().
   return reservasCache;
 }
 
@@ -129,7 +123,6 @@ function generarCodigoReserva() {
   let intentos = 0;
 
   do {
-    // 6 dígitos aleatorios seguros (000000–999999)
     const bytes = new Uint32Array(1);
     crypto.getRandomValues(bytes);
     const num = bytes[0] % 1000000;
@@ -141,7 +134,6 @@ function generarCodigoReserva() {
 }
 
 function guardarReserva(reserva) {
-  // 1) Actualizamos el caché local (sincrónico, para que se vea al toque)
   const codNuevo = (reserva.codigo || '').replace(/\D/g, '').padStart(6, '0');
   const existenteIdx = reservasCache.findIndex(r => {
     const rCod = (r.codigo || '').replace(/\D/g, '').padStart(6, '0');
@@ -154,14 +146,12 @@ function guardarReserva(reserva) {
     reservasCache.push(reserva);
   }
 
-  // 2) Mandamos a Supabase en paralelo (no bloqueamos el UI)
   window.SB.guardarReserva(reserva).catch(err => {
     console.error('[Supabase] Error al guardar reserva:', err);
   });
 }
 
 function getFechaISO(date = new Date()) {
-  // Devuelve YYYY-MM-DD en hora local
   const y = date.getFullYear();
   const m = String(date.getMonth() + 1).padStart(2, '0');
   const d = String(date.getDate()).padStart(2, '0');
@@ -179,8 +169,6 @@ function formatearFecha(iso) {
 }
 
 function horarioOcupado(fechaISO, horario) {
-  // Si estamos editando una reserva, ignoramos esa reserva
-  // en la validación (así el propio turno no aparece como "ocupado").
   const codEnEdicion = state.codigoEnEdicion
     ? state.codigoEnEdicion.replace(/\D/g, '').padStart(6, '0')
     : null;
@@ -193,8 +181,6 @@ function horarioOcupado(fechaISO, horario) {
 }
 
 function horarioBloqueado(fechaISO, horario) {
-  // Devuelve true si el horario está bloqueado por la manicura.
-  // Los bloqueos tienen: { fecha, horarios: [...], tipo: 'parcial'|'completo' }
   return bloqueosCache.some(b =>
     b.fecha === fechaISO &&
     Array.isArray(b.horarios) &&
@@ -205,6 +191,20 @@ function horarioBloqueado(fechaISO, horario) {
 /* Un horario está disponible si NO está reservado Y NO está bloqueado */
 function horarioNoDisponible(fechaISO, horario) {
   return horarioOcupado(fechaISO, horario) || horarioBloqueado(fechaISO, horario);
+}
+
+/* Devuelve true si ese horario ya pasó (solo aplica al día de hoy).
+   Formato esperado de `horario`: "HH:MM". */
+function horarioYaPaso(fechaISO, horario) {
+  const hoyISO = getFechaISO();
+  if (fechaISO !== hoyISO) return false;
+
+  const [hh, mm] = horario.split(':').map(Number);
+  const ahora = new Date();
+  const minutosAhora = ahora.getHours() * 60 + ahora.getMinutes();
+  const minutosHorario = hh * 60 + mm;
+
+  return minutosHorario <= minutosAhora;
 }
 
 function mostrarError(msg) {
@@ -276,6 +276,21 @@ function renderServicios() {
   });
 }
 
+function seleccionarServicio(id) {
+  // Si el usuario cambia de servicio, ya no está editando.
+  if (state.reservaEnEdicion && state.reservaEnEdicion.servicio !== id) {
+    state.codigoEnEdicion = null;
+    state.reservaEnEdicion = null;
+  }
+
+  state.servicioSeleccionado = id;
+  ocultarError();
+
+  $$('.servicio-item').forEach(el => {
+    el.classList.toggle('selected', el.dataset.id === id);
+  });
+}
+
 /* ───────────────────────────────────────────────────────────
    RENDER · ZONAS
    ─────────────────────────────────────────────────────────── */
@@ -301,6 +316,22 @@ function renderZonas() {
     btn.addEventListener('click', () => seleccionarZona(z.id));
     grid.appendChild(btn);
   });
+}
+
+function seleccionarZona(zonaId) {
+  state.zonaSeleccionada = zonaId;
+  // Al cambiar de zona, la fecha y horario se resetean.
+  state.fechaSeleccionada = null;
+  state.horarioSeleccionado = null;
+  ocultarError();
+  ocultarAvisoZona();
+  renderZonas();
+  renderCalendario();
+  renderHorarios();
+
+  if (typeof window.actualizarBotonContinuarWizard === 'function') {
+    window.actualizarBotonContinuarWizard();
+  }
 }
 
 /* ───────────────────────────────────────────────────────────
@@ -350,39 +381,6 @@ function renderInfoZonas() {
   });
 }
 
-function seleccionarZona(zonaId) {
-  state.zonaSeleccionada = zonaId;
-  // Al cambiar de zona, la fecha y horario se resetean: puede que la fecha
-  // que tenía elegida ya no sea válida para la nueva zona.
-  state.fechaSeleccionada = null;
-  state.horarioSeleccionado = null;
-  ocultarError();
-  ocultarAvisoZona();
-  renderZonas();
-  renderCalendario();
-  renderHorarios();
-  if (typeof window.actualizarBotonContinuarWizard === 'function') {
-    window.actualizarBotonContinuarWizard();
-  }
-}
-
-function seleccionarServicio(id) {
-  // Si el usuario cambia de servicio, ya no está editando:
-  // limpiamos el código y la reserva en edición.
-  // (Salvo que sea el mismo servicio que ya tenía precargado.)
-  if (state.reservaEnEdicion && state.reservaEnEdicion.servicio !== id) {
-    state.codigoEnEdicion = null;
-    state.reservaEnEdicion = null;
-  }
-
-  state.servicioSeleccionado = id;
-  ocultarError();
-
-  $$('.servicio-item').forEach(el => {
-    el.classList.toggle('selected', el.dataset.id === id);
-  });
-}
-
 /* ───────────────────────────────────────────────────────────
    RENDER · HORARIOS
    ─────────────────────────────────────────────────────────── */
@@ -390,7 +388,7 @@ function renderHorarios() {
   const grid = $('#horarios-grid');
   if (!grid) return;
 
-  // Sin fecha → no mostramos nada (el título del paso ya explica qué hacer)
+  // Sin fecha → no mostramos nada
   if (!state.fechaSeleccionada) {
     grid.innerHTML = '';
     return;
@@ -468,7 +466,7 @@ const MESES = [
 ];
 const DIAS_SEMANA = ['Lu', 'Ma', 'Mi', 'Ju', 'Vi', 'Sa', 'Do'];
 
-// Mes visible actual del calendario (Date apuntando al 1° del mes)
+// Mes visible actual del calendario
 let mesVisible = (() => {
   const hoy = new Date();
   return new Date(hoy.getFullYear(), hoy.getMonth(), 1);
@@ -478,20 +476,6 @@ function contarLibres(fechaISO) {
   return CONFIG.horarios.filter(h =>
     !horarioNoDisponible(fechaISO, h) && !horarioYaPaso(fechaISO, h)
   ).length;
-}
-
-/* Devuelve true si ese horario ya pasó (solo aplica al día de hoy).
-   Formato esperado de `horario`: "HH:MM". */
-function horarioYaPaso(fechaISO, horario) {
-  const hoyISO = getFechaISO();
-  if (fechaISO !== hoyISO) return false;
-
-  const [hh, mm] = horario.split(':').map(Number);
-  const ahora = new Date();
-  const minutosAhora = ahora.getHours() * 60 + ahora.getMinutes();
-  const minutosHorario = hh * 60 + mm;
-
-  return minutosHorario <= minutosAhora;
 }
 
 function colorDisponibilidad(fechaISO) {
@@ -516,6 +500,9 @@ function esFechaPasada(date) {
   return d < hoy;
 }
 
+/* ───────────────────────────────────────────────────────────
+   CALENDARIO · render
+   ─────────────────────────────────────────────────────────── */
 function renderCalendario() {
   const cont = $('#calendario');
   if (!cont) return;
@@ -524,18 +511,14 @@ function renderCalendario() {
   const mes = mesVisible.getMonth();
 
   // Si todavía no eligió zona, el calendario no es interactivo.
-  // Aplicamos una clase al contenedor para estilarlo visualmente.
   cont.classList.toggle('calendario-bloqueado', !state.zonaSeleccionada);
 
-  // Header
   const titulo = `${MESES[mes]} ${anio}`;
 
-  // ¿Se puede ir al mes anterior? (siempre y cuando no sea antes del mes actual)
   const hoy = new Date();
   const mesActual = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
   const puedeIrAtras = mesVisible > mesActual;
 
-  // ¿Ya estamos en el mes actual? → el botón "Hoy" se deshabilita
   const enMesActual = mesVisible.getFullYear() === hoy.getFullYear()
                     && mesVisible.getMonth() === hoy.getMonth();
 
@@ -564,7 +547,6 @@ function renderCalendario() {
   const primerDia = new Date(anio, mes, 1).getDay();
   const offset = (primerDia + 6) % 7;
 
-  // Días del mes
   const diasEnMes = new Date(anio, mes + 1, 0).getDate();
 
   // Celdas vacías al inicio
@@ -598,7 +580,6 @@ function renderCalendario() {
     }
 
     // Día urgente → guardamos cuántos horarios libres quedan
-    // (el tooltip lo lee de acá al hover/tap)
     if (!noLaborable && !pasada) {
       const libres = contarLibres(fechaISO);
       if (libres > 0 && libres <= 3) {
@@ -607,14 +588,14 @@ function renderCalendario() {
       }
     }
 
-    // Número del día (envuelto en un span con clase para pintar la zona)
+    // Número del día
     const num = document.createElement('span');
     num.className = 'calendario-dia-num';
     num.textContent = dia;
     btn.appendChild(num);
 
     // Si el día ya está anclado a una zona, guardamos el id para pintarlo.
-    // Pero si todavía no eligió zona, no mostramos los colores de zona.
+    // Solo si ya eligió zona (para no spoilear antes).
     if (state.zonaSeleccionada) {
       const zonaDia = zonaDelDia(fechaISO);
       if (zonaDia) {
@@ -643,7 +624,7 @@ function renderCalendario() {
       btn.appendChild(badge);
     }
 
-    // Tooltip de urgencia: aparece al hover (desktop) o al primer tap (mobile)
+    // Tooltip de urgencia
     if (btn.classList.contains('calendario-dia-urgente')) {
       btn.setAttribute('aria-label',
         `${dia} · Últimos ${btn.dataset.quedan} turnos disponibles`);
@@ -750,23 +731,19 @@ function initTooltipUrgencia() {
     tooltip.hidden = false;
     tooltip.classList.remove('calendario-tooltip-visible');
 
-    // Posicionar arriba del día, centrado
     const rect = btn.getBoundingClientRect();
     const tooltipRect = tooltip.getBoundingClientRect();
 
     let top = rect.top + window.scrollY - tooltipRect.height - 10;
     let left = rect.left + window.scrollX + (rect.width / 2) - (tooltipRect.width / 2);
 
-    // Si se sale por la izquierda, lo pegamos al borde
     if (left < 8) left = 8;
-    // Si se sale por la derecha, lo pegamos al borde
     const maxLeft = window.scrollX + document.documentElement.clientWidth - tooltipRect.width - 8;
     if (left > maxLeft) left = maxLeft;
 
     tooltip.style.top = `${top}px`;
     tooltip.style.left = `${left}px`;
 
-    // Forzamos reflow para que la animación se dispare bien
     void tooltip.offsetWidth;
     tooltip.classList.add('calendario-tooltip-visible');
   }
@@ -777,7 +754,6 @@ function initTooltipUrgencia() {
       tooltipTimer = null;
     }
     tooltip.classList.remove('calendario-tooltip-visible');
-    // Esperamos a que termine la transición antes de ocultar
     tooltipTimer = setTimeout(() => {
       tooltip.hidden = true;
     }, 180);
@@ -793,7 +769,6 @@ function initTooltipUrgencia() {
   cont.addEventListener('mouseout', (e) => {
     const btn = e.target.closest('.calendario-dia-urgente');
     if (!btn) return;
-    // Solo ocultamos si realmente salimos del botón
     const related = e.relatedTarget;
     if (related && btn.contains(related)) return;
     ocultarTooltip();
@@ -808,24 +783,20 @@ function initTooltipUrgencia() {
       && tooltip.dataset.targetFecha === btn.dataset.fecha;
 
     if (!yaMostrado) {
-      // Primer tap: solo mostramos el tooltip
       e.preventDefault();
       tooltip.dataset.targetFecha = btn.dataset.fecha;
       mostrarTooltip(btn);
-      // Auto-ocultar a los 3s
       if (tooltipTimer) clearTimeout(tooltipTimer);
       tooltipTimer = setTimeout(() => {
         ocultarTooltip();
         delete tooltip.dataset.targetFecha;
       }, 3000);
     } else {
-      // Segundo tap: dejamos que el click normal seleccione el día
       delete tooltip.dataset.targetFecha;
       ocultarTooltip();
     }
   }, { passive: false });
 
-  // Ocultar tooltip si se scrollea o se cambia el tamaño
   window.addEventListener('scroll', ocultarTooltip, { passive: true });
   window.addEventListener('resize', ocultarTooltip);
 }
@@ -841,8 +812,7 @@ function validarFormulario(datos) {
   if (!datos.nombre || datos.nombre.trim().length < 2) return 'Ingresá tu nombre.';
   if (!datos.whatsapp || datos.whatsapp.replace(/\D/g, '').length < 8) return 'Ingresá un WhatsApp válido.';
 
-  // Regla de "un día = una zona": el día debe pertenecer a la misma zona
-  // que la reserva, o estar libre.
+  // Regla de "un día = una zona"
   const zonaDia = zonaDelDia(datos.fecha);
   if (zonaDia && zonaDia !== datos.zona) {
     return `Ese día solo se atiende en ${nombreZona(zonaDia)}. Elegí otro día o esa zona.`;
@@ -923,9 +893,8 @@ function mostrarRevision(reserva) {
   if (card) card.hidden = true;
 
   rev.hidden = false;
-  // Disparar animación (sacamos y ponemos la clase para reiniciarla cada vez)
   rev.classList.remove('anim-fade-up');
-  void rev.offsetWidth; // force reflow
+  void rev.offsetWidth;
   rev.classList.add('anim-fade-up');
   rev.scrollIntoView({ behavior: 'smooth', block: 'center' });
 }
@@ -974,17 +943,13 @@ function editarReserva(reservaParam) {
   const reserva = reservaParam || ultimaReservaConfirmada;
   if (!reserva) return;
 
-  // 1) Guardar la reserva en edición (NO la borramos del storage)
   state.reservaEnEdicion = reserva;
-
-  // 2) Precargar el estado con los datos originales
   state.servicioSeleccionado = reserva.servicio;
   state.zonaSeleccionada = reserva.zona || null;
   state.fechaSeleccionada = reserva.fecha;
   state.horarioSeleccionado = reserva.horario;
   state.codigoEnEdicion = reserva.codigo;
 
-  // 3) Precargar los inputs
   const inputNombre = $('#input-nombre');
   const inputWhats  = $('#input-whatsapp');
   const inputNota   = $('#input-nota');
@@ -992,13 +957,11 @@ function editarReserva(reservaParam) {
   if (inputWhats)  inputWhats.value  = reserva.whatsapp || '';
   if (inputNota)   inputNota.value   = reserva.nota || '';
 
-  // 4) Refrescar el wizard con la selección restaurada
   renderServicios();
   renderZonas();
   renderCalendario();
   renderHorarios();
 
-  // 5) Mostrar el form, ocultar el modal de éxito (por si veníamos de ahí)
   const card = $('#reserva-exitosa');
   const form = $('#form-turno');
   const header = $('#reservar-header');
@@ -1006,19 +969,15 @@ function editarReserva(reservaParam) {
   if (form) form.hidden = false;
   if (header) header.hidden = false;
 
-  // 6) Ocultar el resultado de consulta (ya estamos en modo edición)
   const contConsultar = $('#consultar-resultado');
   if (contConsultar) contConsultar.hidden = true;
 
-  // 7) Limpiar la referencia temporal
   ultimaReservaConfirmada = null;
 
-  // 8) Volver al paso 1 del wizard
-  if (typeof irAPasoDesdeEdicion === 'function') {
-    irAPasoDesdeEdicion(1);
+  if (typeof window.irAPasoDesdeEdicion === 'function') {
+    window.irAPasoDesdeEdicion(1);
   }
 
-  // 9) Scroll al formulario
   const reservar = document.querySelector('#reservar');
   if (reservar) reservar.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
@@ -1052,12 +1011,9 @@ function resetFormulario() {
   renderCalendario();
   renderHorarios();
 
-  // Volver al paso 1 usando la función interna del wizard
-  // (que resetea `pasoActual` y los botones correctamente)
   if (typeof window.irAPasoDesdeEdicion === 'function') {
     window.irAPasoDesdeEdicion(1);
   } else {
-    // Fallback: si por alguna razón no está expuesta, hacemos la manipulación manual
     const wizardPasos = document.querySelectorAll('.wizard-paso');
     wizardPasos.forEach(el => { el.hidden = el.dataset.paso !== '1'; });
 
@@ -1084,12 +1040,9 @@ function initFormulario() {
   const form = $('#form-turno');
   if (!form) return;
 
-  // ── Wizard: estado del paso actual ──
   let pasoActual = 1;
   const TOTAL_PASOS = 3;
 
-  // Guardamos los datos armados en el paso de revisión,
-  // para no tener que releer el DOM cuando confirma.
   let reservaPendiente = null;
 
   function irAPaso(n, opciones = {}) {
@@ -1098,29 +1051,24 @@ function initFormulario() {
     pasoActual = Math.max(1, Math.min(TOTAL_PASOS, n));
     ocultarError();
 
-    // Mostrar solo el paso actual
     $$('.wizard-paso').forEach(el => {
       const num = Number(el.dataset.paso);
       el.hidden = num !== pasoActual;
     });
 
-    // Actualizar barra de progreso
     $$('.wizard-step').forEach(el => {
       const num = Number(el.dataset.step);
       el.classList.toggle('active', num === pasoActual);
       el.classList.toggle('completed', num < pasoActual);
     });
 
-    // Botones
     const btnPrev = $('#btn-wizard-prev');
     const btnNext = $('#btn-wizard-next');
     if (btnPrev) btnPrev.hidden = pasoActual === 1;
     if (btnNext) btnNext.textContent = pasoActual === TOTAL_PASOS ? 'Revisar turno' : 'Continuar';
 
-    // Refrescar estado del botón "Continuar"
     actualizarBotonContinuar();
 
-    // Scroll suave al inicio del form (solo si `scroll` es true)
     if (scroll) {
       const reservar = document.querySelector('#reservar');
       if (reservar) reservar.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -1143,7 +1091,6 @@ function initFormulario() {
       if (nombre.length < 2) return false;
       if (whatsapp.replace(/\D/g, '').length < 8) return false;
 
-      // Si eligió "Sí" en seña, validar monto y comprobante
       const senaSeleccionada = document.querySelector('input[name="sena"]:checked')?.value || 'no';
       if (senaSeleccionada === 'si') {
         const monto = $('#input-sena-monto')?.value.trim() || '';
@@ -1163,11 +1110,11 @@ function initFormulario() {
     btnNext.disabled = !pasoEstaCompleto(pasoActual);
   }
 
-  // Escuchar cambios que afectan la validez del paso actual
   document.addEventListener('click', (e) => {
     if (e.target.closest('.servicio-item') ||
         e.target.closest('.horario-item') ||
-        e.target.closest('.calendario-dia')) {
+        e.target.closest('.calendario-dia') ||
+        e.target.closest('.zona-item')) {
       actualizarBotonContinuar();
     }
   });
@@ -1177,7 +1124,6 @@ function initFormulario() {
     if (el) el.addEventListener('input', actualizarBotonContinuar);
   });
 
-  // Botón "Continuar" / "Revisar turno"
   const btnNext = $('#btn-wizard-next');
   if (btnNext) {
     btnNext.addEventListener('click', () => {
@@ -1188,7 +1134,6 @@ function initFormulario() {
         return;
       }
 
-      // Estamos en el último paso → armar reserva y mostrar revisión
       const datos = {
         servicio: state.servicioSeleccionado,
         zona: state.zonaSeleccionada,
@@ -1218,18 +1163,10 @@ function initFormulario() {
     });
   }
 
-  // Botón "Volver"
   const btnPrev = $('#btn-wizard-prev');
   if (btnPrev) {
     btnPrev.addEventListener('click', () => {
       if (pasoActual > 1) {
-        // Si el usuario vuelve al paso 1, ya no está editando:
-        // limpiamos la reserva en edición (así si confirma,
-        // se crea una nueva en vez de reemplazar la original).
-        if (pasoActual === 2) {
-          // Solo limpiamos si vuelve al paso 1 desde el 2.
-          // Si vuelve del 3 al 2, seguimos en modo edición.
-        }
         if (pasoActual - 1 === 1) {
           state.codigoEnEdicion = null;
           state.reservaEnEdicion = null;
@@ -1239,7 +1176,6 @@ function initFormulario() {
     });
   }
 
-  // Botón "Volver" del paso de revisión → vuelve al último paso del wizard
   const btnVolverRevision = $('#btn-volver-revision');
   if (btnVolverRevision) {
     btnVolverRevision.addEventListener('click', () => {
@@ -1252,7 +1188,6 @@ function initFormulario() {
     });
   }
 
-  // Botón "Confirmar turno" del paso de revisión
   const btnConfirmar = $('#btn-confirmar-whatsapp');
   if (btnConfirmar) {
     btnConfirmar.addEventListener('click', async () => {
@@ -1260,7 +1195,6 @@ function initFormulario() {
 
       activarSpinner(btnConfirmar);
 
-      // Si hay seña, subir comprobante ANTES de guardar la reserva
       const senaSeleccionada = document.querySelector('input[name="sena"]:checked')?.value || 'no';
       if (senaSeleccionada === 'si') {
         const archivo = $('#input-sena-comprobante')?.files?.[0];
@@ -1273,7 +1207,6 @@ function initFormulario() {
         reservaPendiente.sena_monto = $('#input-sena-monto')?.value.trim() || '';
       }
 
-      // Pequeño delay para que se sienta "trabajando"
       setTimeout(() => {
         guardarReserva(reservaPendiente);
 
@@ -1284,7 +1217,6 @@ function initFormulario() {
         ultimaReservaConfirmada = reservaPendiente;
         reservaPendiente = null;
 
-        // Ya no estamos editando: limpiamos la referencia
         state.reservaEnEdicion = null;
         state.codigoEnEdicion = null;
 
@@ -1293,27 +1225,21 @@ function initFormulario() {
     });
   }
 
-  // Botón "Confirmar" final del cartel de éxito
   const btnConfirmarFinal = $('#btn-confirmar-final');
   if (btnConfirmarFinal) {
     btnConfirmarFinal.addEventListener('click', resetFormulario);
   }
 
-  // Botón "Editar turno" del cartel de éxito
   const btnEditar = $('#btn-editar-reserva');
   if (btnEditar) {
     btnEditar.addEventListener('click', () => editarReserva());
   }
 
-  // Exponer irAPaso para que editarReserva() pueda resetear el wizard
-  // cuando se llama desde "Consultar turno".
+  // Exponer funciones para que otras partes del script puedan usarlas
   window.irAPasoDesdeEdicion = irAPaso;
-
-  // Exponer actualizarBotonContinuar para que seleccionarZona() pueda
-  // refrescar el estado del botón "Continuar".
   window.actualizarBotonContinuarWizard = actualizarBotonContinuar;
 
-  // Mostrar/ocultar bloque de seña según el radio seleccionado
+  // Mostrar/ocultar bloque de seña
   const radiosSena = $$('input[name="sena"]');
   const bloqueSena = $('#bloque-sena');
   const inputSenaMonto = $('#input-sena-monto');
@@ -1326,7 +1252,6 @@ function initFormulario() {
       bloqueSena.hidden = false;
     } else {
       bloqueSena.hidden = true;
-      // Limpiar campos al ocultar
       if (inputSenaMonto) inputSenaMonto.value = '';
       if (inputSenaComprobante) inputSenaComprobante.value = '';
     }
@@ -1337,8 +1262,7 @@ function initFormulario() {
     radio.addEventListener('change', actualizarBloqueSena);
   });
 
-  // Init: arrancamos en el paso 1 SIN scrollear (para que la página
-  // cargue en el hero, no en la sección de reservar)
+  // Init
   irAPaso(1, { scroll: false });
 }
 
@@ -1359,8 +1283,6 @@ function normalizarWhatsapp(tel) {
 
 function buscarReservas(whatsapp, codigo) {
   const telNorm = normalizarWhatsapp(whatsapp);
-  // Solo dígitos y rellenamos con ceros a la izquierda por si el usuario
-  // tipea "4821" en lugar de "004821".
   const codNorm = (codigo || '').replace(/\D/g, '').padStart(6, '0');
 
   return getReservas().filter(r => {
@@ -1416,7 +1338,7 @@ function renderConsulta(reservas) {
 
     card.appendChild(resumen);
 
-        if (!esPasada) {
+    if (!esPasada) {
       const acciones = document.createElement('div');
       acciones.className = 'consultar-acciones';
 
@@ -1456,7 +1378,6 @@ function renderConsulta(reservas) {
 }
 
 function abrirConfirmCancelar(card, codigo) {
-  // Si ya hay un panel abierto, lo cerramos y salimos (toggle)
   const existente = card.querySelector('.consultar-confirm');
   if (existente) {
     existente.remove();
@@ -1498,13 +1419,11 @@ function abrirConfirmCancelar(card, codigo) {
 function cancelarReserva(codigo) {
   const codNorm = (codigo || '').replace(/\D/g, '').padStart(6, '0');
 
-  // 1) Actualizamos el caché local
   reservasCache = reservasCache.filter(r => {
     const rCod = (r.codigo || '').replace(/\D/g, '').padStart(6, '0');
     return rCod !== codNorm;
   });
 
-  // 2) Mandamos a Supabase en paralelo
   window.SB.borrarReserva(codigo).catch(err => {
     console.error('[Supabase] Error al borrar reserva:', err);
   });
@@ -1521,13 +1440,11 @@ function cancelarReserva(codigo) {
     const cartel = document.createElement('div');
     cartel.className = 'consultar-exito anim-fade-up';
 
-    // Ícono check en círculo verde
     const icono = document.createElement('span');
     icono.className = 'consultar-exito-icono';
     icono.setAttribute('aria-hidden', 'true');
     icono.innerHTML = '<svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
 
-    // Textos
     const titulo = document.createElement('h3');
     titulo.className = 'consultar-exito-titulo';
     titulo.textContent = 'Turno cancelado';
@@ -1536,7 +1453,6 @@ function cancelarReserva(codigo) {
     texto.className = 'consultar-exito-texto';
     texto.textContent = 'Tu reserva fue eliminada. Si querés, podés reservar otro horario.';
 
-    // Botón para reservar otro
     const btnReservar = document.createElement('a');
     btnReservar.className = 'btn btn-primary consultar-exito-btn';
     btnReservar.href = '#reservar';
@@ -1600,7 +1516,6 @@ function initConsultar() {
       return;
     }
 
-    // Simulamos un mini delay + spinner para que se sienta "trabajando"
     const btn = form.querySelector('button[type="submit"]');
     activarSpinner(btn);
 
@@ -1613,18 +1528,12 @@ function initConsultar() {
 }
 
 /* ───────────────────────────────────────────────────────────
-   INIT
-   ─────────────────────────────────────────────────────────── */
-
-/* ───────────────────────────────────────────────────────────
    COPIAR CÓDIGO AL PORTAPAPELES
    ─────────────────────────────────────────────────────────── */
 function copiarAlPortapapeles(texto) {
-  // Método moderno
   if (navigator.clipboard && window.isSecureContext) {
     return navigator.clipboard.writeText(texto);
   }
-  // Fallback: textarea temporal
   return new Promise((resolve, reject) => {
     try {
       const ta = document.createElement('textarea');
@@ -1674,11 +1583,13 @@ function initCopiarCodigo() {
   });
 }
 
+/* ───────────────────────────────────────────────────────────
+   INIT
+   ─────────────────────────────────────────────────────────── */
 document.addEventListener('DOMContentLoaded', async () => {
   const esHome = !!document.querySelector('#form-turno');
   if (!esHome) return;
 
-  // Cargamos reservas Y bloqueos desde Supabase ANTES de renderizar
   await cargarReservas();
   await cargarBloqueos();
 

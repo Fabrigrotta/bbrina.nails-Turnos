@@ -15,7 +15,7 @@
   />
 
   <link rel="stylesheet" href="styles.css" />
-    <!-- Favicon SVG inline -->
+  <!-- Favicon SVG inline -->
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='32' fill='%23f6d2dc'/%3E%3Ctext x='32' y='43' font-family='Georgia,serif' font-size='34' font-weight='700' fill='%237d3c50' text-anchor='middle'%3Ebb%3C/text%3E%3C/svg%3E" />
 </head>
 <body>
@@ -46,7 +46,7 @@
   <section class="hero">
     <div class="container hero-grid">
 
-       <!-- Columna izquierda: texto -->
+      <!-- Columna izquierda: texto -->
       <div class="hero-inner">
         <span class="hero-tag">Nail Studio</span>
 
@@ -103,7 +103,6 @@
           </div>
         </div>
 
-        <!-- Nuevo: badge flotante decorativo -->
         <span class="hero-media-badge" aria-hidden="true">
           <span class="hero-media-badge-dot"></span>
           Atención personalizada
@@ -130,7 +129,6 @@
         </header>
 
         <form id="form-consultar" class="card form-consultar" novalidate>
-          <!-- Indicador de pasos visual (decorativo) -->
           <div class="consultar-pasos" aria-hidden="true">
             <div class="consultar-paso">
               <span class="consultar-paso-num">1</span>
@@ -177,7 +175,6 @@
             Buscar turno
           </button>
 
-          <!-- Ayuda plegable · "¿No te acordás del código?" -->
           <details class="consultar-ayuda">
             <summary>¿No te acordás del código?</summary>
             <div class="consultar-ayuda-cuerpo">
@@ -192,7 +189,6 @@
           </details>
         </form>
 
-        <!-- Resultado (oculto por defecto) -->
         <div id="consultar-resultado" class="consultar-resultado" hidden>
           <!-- Render dinámico desde script.js -->
         </div>
@@ -235,14 +231,14 @@
             </div>
           </div>
 
-          <!-- Paso 2: Fecha y horario -->
+          <!-- Paso 2: Zona, fecha y horario -->
           <div class="wizard-paso" data-paso="2" hidden>
             <h3 class="wizard-paso-titulo">Elegí zona, fecha y horario</h3>
-            <p class="wizard-paso-texto">Primero elegí la zona, después el día y el horario.</p>
+            <p class="wizard-paso-texto">Contame dónde querés que te atienda. Después elegís el día y el horario.</p>
 
             <!-- Selector de zona -->
             <div class="zona-selector">
-              <label class="zona-selector-label">¿Dónde te vas a hacer las uñas? <span class="req">*</span></label>
+              <h4 class="zona-selector-titulo">¿Dónde te vas a hacer las uñas? <span class="req">*</span></h4>
               <div id="zonas-grid" class="zonas-grid">
                 <!-- Render dinámico desde script.js -->
               </div>
@@ -251,10 +247,12 @@
             <!-- Cartel de aviso: día tomado por otra zona -->
             <p id="zona-aviso" class="zona-aviso" hidden></p>
 
+            <!-- Calendario -->
             <div id="calendario" class="calendario">
               <!-- Render dinámico desde script.js -->
             </div>
 
+            <!-- Horarios -->
             <div id="horarios-grid" class="horarios-grid">
               <!-- Render dinámico desde script.js -->
             </div>
@@ -328,7 +326,7 @@
           </p>
         </form>
 
-        <!-- Paso intermedio: revisión (oculto por defecto) -->
+        <!-- Paso intermedio: revisión -->
         <div id="revision-turno" class="card revision-turno" hidden>
           <span class="section-tag">Último paso</span>
           <h3 class="revision-titulo">Revisá tu turno</h3>
@@ -347,39 +345,40 @@
           </div>
         </div>
 
-  <!-- ═══════════════ MODAL TURNO CONFIRMADO ═══════════════ -->
-    <div id="reserva-exitosa" class="modal" hidden>
-      <div class="modal-backdrop"></div>
-      <div class="modal-card card reserva-exitosa-modal">
-        <span class="check-icon" aria-hidden="true">✓</span>
+        <!-- ═══════════════ MODAL TURNO CONFIRMADO ═══════════════ -->
+        <div id="reserva-exitosa" class="modal" hidden>
+          <div class="modal-backdrop"></div>
+          <div class="modal-card card reserva-exitosa-modal">
+            <span class="check-icon" aria-hidden="true">✓</span>
 
-        <h3 class="reserva-exito-titulo">¡Turno reservado con éxito!</h3>
-        <p class="reserva-exito-subtitulo">Guardá tu código para consultar o cancelar tu turno.</p>
+            <h3 class="reserva-exito-titulo">¡Turno reservado con éxito!</h3>
+            <p class="reserva-exito-subtitulo">Guardá tu código para consultar o cancelar tu turno.</p>
 
-        <p id="reserva-resumen" class="reserva-resumen"></p>
+            <p id="reserva-resumen" class="reserva-resumen"></p>
 
-        <div class="reserva-codigo">
-          <span class="reserva-codigo-label">Tu código de reserva</span>
-          <button type="button" id="btn-copiar-codigo" class="reserva-codigo-btn" title="Copiar código">
-            <strong id="reserva-codigo-valor" class="reserva-codigo-valor">—</strong>
-            <svg class="reserva-codigo-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
-              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
-            </svg>
-          </button>
-          <span class="reserva-codigo-hint" id="reserva-codigo-hint">Click para copiar</span>
-        </div>
+            <div class="reserva-codigo">
+              <span class="reserva-codigo-label">Tu código de reserva</span>
+              <button type="button" id="btn-copiar-codigo" class="reserva-codigo-btn" title="Copiar código">
+                <strong id="reserva-codigo-valor" class="reserva-codigo-valor">—</strong>
+                <svg class="reserva-codigo-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+                </svg>
+              </button>
+              <span class="reserva-codigo-hint" id="reserva-codigo-hint">Click para copiar</span>
+            </div>
 
-        <div class="reserva-acciones">
-          <button type="button" id="btn-editar-reserva" class="btn btn-secondary">
-            Editar turno
-          </button>
-          <button type="button" id="btn-confirmar-final" class="btn btn-primary">
-            Listo
-          </button>
+            <div class="reserva-acciones">
+              <button type="button" id="btn-editar-reserva" class="btn btn-secondary">
+                Editar turno
+              </button>
+              <button type="button" id="btn-confirmar-final" class="btn btn-primary">
+                Listo
+              </button>
+            </div>
+          </div>
         </div>
       </div>
-    </div>
     </section>
 
     <!-- ═══════════════ INFO · UBICACIONES ═══════════════ -->
@@ -402,7 +401,6 @@
       <div class="container">
         <div class="card acerca-card">
 
-          <!-- Avatar con foto real -->
           <div class="acerca-avatar">
             <img
               src="assets/sabrina.jpeg"
@@ -419,18 +417,15 @@
           <div class="acerca-info">
             <span class="section-tag">Acerca de</span>
 
-            <!-- EDITAR: nombre y handle -->
             <h2 class="acerca-nombre">Sabrina · bbrina.nails</h2>
             <span class="acerca-handle">Nail artist</span>
 
-            <!-- EDITAR: bio -->
             <p class="acerca-bio">
               Amo los diseños delicados y los detalles que hacen la diferencia.
               Trabajo con turnos para dedicarle a cada clienta el tiempo que merece.
             </p>
           </div>
 
-          <!-- Banner CTA Instagram -->
           <aside class="acerca-cta">
             <div class="acerca-cta-icon" aria-hidden="true">
               <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
@@ -456,7 +451,8 @@
         </div>
       </div>
     </section>
-        <!-- ═══════════════ TESTIMONIOS ═══════════════ -->
+
+    <!-- ═══════════════ TESTIMONIOS ═══════════════ -->
     <section id="testimonios" class="section testimonios">
       <div class="container">
         <header class="section-header">
@@ -465,7 +461,6 @@
           <p class="section-text">Reseñas reales de quienes ya pasaron por el studio.</p>
         </header>
 
-        <!-- Badge de calificación promedio · EDITAR: número y cantidad de reseñas -->
         <div class="testimonios-badge-wrap">
           <div class="testimonios-badge">
             <span class="testimonios-estrellas" aria-hidden="true">★★★★★</span>
@@ -475,10 +470,8 @@
           </div>
         </div>
 
-        <!-- Grilla de testimonios -->
         <div class="testimonios-grid">
 
-           <!-- Testimonio 1 -->
           <article class="testimonio-card">
             <span class="testimonio-comillas" aria-hidden="true">"</span>
             <div class="testimonio-estrellas" aria-label="5 de 5 estrellas">
@@ -500,7 +493,6 @@
             </footer>
           </article>
 
-          <!-- Testimonio 2 -->
           <article class="testimonio-card">
             <span class="testimonio-comillas" aria-hidden="true">"</span>
             <div class="testimonio-estrellas" aria-label="5 de 5 estrellas">
@@ -522,7 +514,6 @@
             </footer>
           </article>
 
-          <!-- Testimonio 3 -->
           <article class="testimonio-card">
             <span class="testimonio-comillas" aria-hidden="true">"</span>
             <div class="testimonio-estrellas" aria-label="5 de 5 estrellas">
@@ -664,7 +655,7 @@
     </div>
   </footer>
 
-    <!-- ═══════════════ MODAL LOGIN CUENTA ═══════════════ -->
+  <!-- ═══════════════ MODAL LOGIN CUENTA ═══════════════ -->
   <div id="modal-login" class="modal" hidden>
     <div class="modal-backdrop" data-close="modal-login"></div>
     <div class="modal-card card">
@@ -691,7 +682,7 @@
     </div>
   </div>
 
-  <!-- ═══════════════ MODAL AVISO (reemplaza alert) ═══════════════ -->
+  <!-- ═══════════════ MODAL AVISO ═══════════════ -->
   <div id="modal-aviso" class="modal modal-aviso" hidden>
     <div class="modal-backdrop" data-close="modal-aviso"></div>
     <div class="modal-card card">
