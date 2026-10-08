@@ -404,15 +404,10 @@ function renderHorarios() {
     return;
   }
 
-  // Si el día está anclado a OTRA zona, mostramos un aviso en lugar de horarios
+  // Si el día está anclado a OTRA zona, no mostramos horarios.
+  // El aviso correspondiente ya se muestra arriba del calendario (ver #zona-aviso).
   if (diaOcupadoPorOtraZona(state.fechaSeleccionada)) {
-    const zonaDia = zonaDelDia(state.fechaSeleccionada);
-    grid.innerHTML = `
-      <p class="horarios-aviso-zona">
-        Este día solo se atiende en <strong>${nombreZona(zonaDia)}</strong>.
-        Elegí otro día o cambiá la zona arriba.
-      </p>
-    `;
+    grid.innerHTML = '';
     state.horarioSeleccionado = null;
     return;
   }
@@ -569,9 +564,8 @@ function renderCalendario() {
     const noLaborable = esDiaNoLaborable(fecha);
     const pasada = esFechaPasada(fecha);
     const sinZona = !state.zonaSeleccionada;
-    const zonaAjena = !sinZona && diaOcupadoPorOtraZona(fechaISO);
 
-    if (noLaborable || pasada || sinZona || zonaAjena) {
+    if (noLaborable || pasada || sinZona) {
       btn.disabled = true;
     }
 
