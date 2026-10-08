@@ -13,14 +13,16 @@
 const CFG = window.BBRINA_CONFIG || {
   whatsapp: '5493413902715',
   servicios: [
-    { id: 'kapping',        nombre: 'Kapping',              duracion: 90,  precio: '$—', emoji: '💅' },
-    { id: 'semipermanente', nombre: 'Semipermanente',       duracion: 60,  precio: '$—', emoji: '✨' },
-    { id: 'esculpidas',     nombre: 'Esculpidas',           duracion: 120, precio: '$—', emoji: '💎' },
-    { id: 'retiro',         nombre: 'Retiro + nuevo',       duracion: 90,  precio: '$—', emoji: '🧴' },
-    { id: 'spa',            nombre: 'Spa de manos',         duracion: 45,  precio: '$—', emoji: '🌸' },
-    { id: 'diseno',         nombre: 'Diseño personalizado', duracion: 30,  precio: '$—', emoji: '🎨' }
+    { id: 'semipermanente', nombre: 'Semipermanente', duracion: 60,  precio: '$—' },
+    { id: 'capping',        nombre: 'Capping',        duracion: 90,  precio: '$—' },
+    { id: 'softgel',        nombre: 'Soft gel',       duracion: 120, precio: '$—' },
+    { id: 'esculpidas',     nombre: 'Esculpidas',     duracion: 120, precio: '$—' },
+    { id: 'pies',           nombre: 'Pies',           duracion: 60,  precio: '$—' },
+    { id: 'arreglos',       nombre: 'Arreglos',       duracion: 20,  precio: '$—' },
+    { id: 'nailart',        nombre: 'Nail art',       duracion: 0,   precio: '$—' },
+    { id: 'retiro',         nombre: 'Retiro',         duracion: 30,  precio: '$—' }
   ],
-  horarios: ['09:00', '10:30', '12:00', '14:00', '15:30', '17:00', '18:30'],
+  horarios: ['14:00', '15:00', '16:00', '17:00', '18:00', '19:00', '20:00'],
   diasNoLaborables: [0],
   marca: 'bbrina.nails',
   storageKey: 'bbrina.turnos.reservas.v1'

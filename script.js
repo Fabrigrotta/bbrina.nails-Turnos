@@ -25,18 +25,21 @@ const CONFIG = {
     { id: 'domicilio', nombre: 'Domicilio de la manicura', color: '#6398A9', descripcion: 'En mi casa' }
   ],
 
-  // Servicios disponibles (mockup · editar libremente)
+  // Servicios disponibles
+  // - duracion: minutos (0 = sin tiempo definido, no se muestra)
   servicios: [
-    { id: 'kapping',       nombre: 'Kapping',           duracion: 90, precio: '$—' },
-    { id: 'semipermanente',nombre: 'Semipermanente',    duracion: 60, precio: '$—' },
-    { id: 'esculpidas',    nombre: 'Esculpidas',        duracion: 120, precio: '$—' },
-    { id: 'retiro',        nombre: 'Retiro + nuevo',    duracion: 90, precio: '$—' },
-    { id: 'spa',           nombre: 'Spa de manos',      duracion: 45, precio: '$—' },
-    { id: 'diseno',        nombre: 'Diseño personalizado', duracion: 30, precio: '$—' }
+    { id: 'semipermanente', nombre: 'Semipermanente', duracion: 60,  precio: '$—' },
+    { id: 'capping',        nombre: 'Capping',        duracion: 90,  precio: '$—' },
+    { id: 'softgel',        nombre: 'Soft gel',       duracion: 120, precio: '$—' },
+    { id: 'esculpidas',     nombre: 'Esculpidas',     duracion: 120, precio: '$—' },
+    { id: 'pies',           nombre: 'Pies',           duracion: 60,  precio: '$—' },
+    { id: 'arreglos',       nombre: 'Arreglos',       duracion: 20,  precio: '$—' },
+    { id: 'nailart',        nombre: 'Nail art',       duracion: 0,   precio: '$—' },
+    { id: 'retiro',         nombre: 'Retiro',         duracion: 30,  precio: '$—' }
   ],
 
-  // Horarios disponibles (mockup · editar libremente)
-  horarios: ['09:00', '10:30', '12:00', '14:00', '15:30', '17:00', '18:30'],
+  // Horarios disponibles
+  horarios: ['14:00', '15:00', '16:00', '17:00', '18:00', '19:00', '20:00'],
 
   // Días no laborables (0 = domingo, 6 = sábado). Por ahora domingo.
   diasNoLaborables: [0],
@@ -259,9 +262,13 @@ function renderServicios() {
     btn.type = 'button';
     btn.className = 'servicio-item';
     btn.dataset.id = serv.id;
+    const meta = serv.duracion > 0
+      ? `${serv.duracion} min · ${serv.precio}`
+      : serv.precio;
+
     btn.innerHTML = `
       <span class="servicio-nombre">${serv.nombre}</span>
-      <span class="servicio-meta">${serv.duracion} min · ${serv.precio}</span>
+      <span class="servicio-meta">${meta}</span>
     `;
 
     btn.addEventListener('click', () => seleccionarServicio(serv.id));
@@ -862,7 +869,7 @@ function mostrarRevision(reserva) {
 
   const serv = CONFIG.servicios.find(s => s.id === reserva.servicio);
   const nombreServ = serv ? serv.nombre : reserva.servicio;
-  const duracion = serv ? ` (${serv.duracion} min)` : '';
+  const duracion = serv && serv.duracion > 0 ? ` (${serv.duracion} min)` : '';
 
   const senaTexto = reserva.sena_monto
     ? `\nSeña: $${reserva.sena_monto} (comprobante adjunto)`
