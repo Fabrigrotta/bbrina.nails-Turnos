@@ -398,17 +398,11 @@ function crearCardReserva(reserva) {
   const acciones = document.createElement('div');
   acciones.className = 'admin-card-acciones';
 
-  const btnEditarDatos = document.createElement('button');
-  btnEditarDatos.type = 'button';
-  btnEditarDatos.className = 'btn btn-secondary admin-btn-sm';
-  btnEditarDatos.textContent = 'Editar datos';
-  btnEditarDatos.addEventListener('click', () => abrirEditarDatos(reserva.codigo));
-
-  const btnMover = document.createElement('button');
-  btnMover.type = 'button';
-  btnMover.className = 'btn btn-secondary admin-btn-sm';
-  btnMover.textContent = 'Mover';
-  btnMover.addEventListener('click', () => abrirMover(reserva.codigo));
+  const btnEditar = document.createElement('button');
+  btnEditar.type = 'button';
+  btnEditar.className = 'btn btn-secondary admin-btn-sm';
+  btnEditar.textContent = 'Editar';
+  btnEditar.addEventListener('click', () => abrirMover(reserva.codigo));
 
   const btnCancelar = document.createElement('button');
   btnCancelar.type = 'button';
@@ -416,8 +410,7 @@ function crearCardReserva(reserva) {
   btnCancelar.textContent = 'Cancelar';
   btnCancelar.addEventListener('click', () => abrirCancelar(reserva.codigo));
 
-  acciones.appendChild(btnEditarDatos);
-  acciones.appendChild(btnMover);
+  acciones.appendChild(btnEditar);
   acciones.appendChild(btnCancelar);
 
   card.appendChild(acciones);
@@ -603,61 +596,6 @@ function initModales() {
   $$('[data-close]').forEach(el => {
     el.addEventListener('click', () => cerrarModal(el.dataset.close));
   });
-}
-
-/* ───────────────────────────────────────────────────────────
-   EDITAR DATOS DEL CLIENTE
-   ─────────────────────────────────────────────────────────── */
-function abrirEditarDatos(codigo) {
-  const reserva = buscarPorCodigo(codigo);
-  if (!reserva) return;
-  state.reservaEditando = reserva;
-
-  $('#modal-editar-datos-codigo').textContent = `#${reserva.codigo}`;
-  $('#edit-datos-nombre').value = reserva.nombre || '';
-  $('#edit-datos-whatsapp').value = reserva.whatsapp || '';
-  $('#edit-datos-nota').value = reserva.nota || '';
-  const err = $('#edit-datos-error');
-  if (err) err.hidden = true;
-
-  abrirModal('modal-editar-datos');
-}
-
-function guardarEdicionDatos() {
-  const reserva = state.reservaEditando;
-  if (!reserva) return;
-
-  const nombre = $('#edit-datos-nombre')?.value.trim() || '';
-  const whatsapp = $('#edit-datos-whatsapp')?.value.trim() || '';
-  const nota = $('#edit-datos-nota')?.value.trim() || '';
-  const err = $('#edit-datos-error');
-
-  if (nombre.length < 2) {
-    if (err) { err.textContent = 'Nombre inválido.'; err.hidden = false; }
-    return;
-  }
-  if (whatsapp.replace(/\D/g, '').length < 8) {
-    if (err) { err.textContent = 'WhatsApp inválido.'; err.hidden = false; }
-    return;
-  }
-
-  const datosNuevos = { nombre, whatsapp, nota };
-  const todas = getReservas();
-  const cod = normalizarCodigo(reserva.codigo);
-
-  const nuevas = todas.map(r =>
-    normalizarCodigo(r.codigo) === cod
-      ? { ...r, ...datosNuevos }
-      : r
-  );
-  setReservas(nuevas);
-
-  window.SB.actualizarReserva(reserva.codigo, datosNuevos)
-    .catch(err => console.error('[Supabase] Error al editar datos:', err));
-
-  state.reservaEditando = null;
-  cerrarModal('modal-editar-datos');
-  renderTodo();
 }
 
 /* ───────────────────────────────────────────────────────────
@@ -1447,9 +1385,6 @@ function exportarCSV() {
    INIT
    ─────────────────────────────────────────────────────────── */
 function initBotones() {
-  const guardarEdicionDatosBtn = $('#btn-guardar-edicion-datos');
-  if (guardarEdicionDatosBtn) guardarEdicionDatosBtn.addEventListener('click', guardarEdicionDatos);
-
   const guardarMoverBtn = $('#btn-guardar-mover');
   if (guardarMoverBtn) guardarMoverBtn.addEventListener('click', guardarMover);
 
