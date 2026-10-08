@@ -4353,3 +4353,24 @@ button { font-family: inherit; }
     font-size: 1.1rem;
   }
 }
+/* Aviso dentro del bloque de horarios: día anclado a otra zona */
+.horarios-aviso-zona {
+  grid-column: 1 / -1;
+  display: block;
+  margin: 0;
+  padding: 18px 20px;
+  background: #fff7e6;
+  border: 1px solid #f9d98c;
+  border-left: 4px solid #f9b95c;
+  border-radius: var(--radius-md);
+  color: #7a5a1e;
+  font-size: 0.9rem;
+  line-height: 1.55;
+  text-align: center;
+  animation: fadeSlideUp 0.28s ease-out both;
+}
+
+.horarios-aviso-zona strong {
+  color: #5a4214;
+  font-weight: 700;
+}

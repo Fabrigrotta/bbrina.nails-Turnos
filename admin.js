@@ -620,59 +620,8 @@ function initModales() {
   });
 }
 
-/* ───────────────────────────────────────────────────────────
-   EDITAR
-   ─────────────────────────────────────────────────────────── */
-function abrirEditar(codigo) {
-  const reserva = buscarPorCodigo(codigo);
-  if (!reserva) return;
-  state.reservaEditando = reserva;
-
-  $('#modal-editar-codigo').textContent = `#${reserva.codigo}`;
-  $('#edit-nombre').value = reserva.nombre || '';
-  $('#edit-whatsapp').value = reserva.whatsapp || '';
-  $('#edit-nota').value = reserva.nota || '';
-  const err = $('#edit-error');
-  if (err) err.hidden = true;
-
-  abrirModal('modal-editar');
-}
-
-function guardarEdicion() {
-  const reserva = state.reservaEditando;
-  if (!reserva) return;
-
-  const nombre = $('#edit-nombre')?.value.trim() || '';
-  const whatsapp = $('#edit-whatsapp')?.value.trim() || '';
-  const nota = $('#edit-nota')?.value.trim() || '';
-  const err = $('#edit-error');
-
-  if (nombre.length < 2) {
-    if (err) { err.textContent = 'Nombre inválido.'; err.hidden = false; }
-    return;
-  }
-  if (whatsapp.replace(/\D/g, '').length < 8) {
-    if (err) { err.textContent = 'WhatsApp inválido.'; err.hidden = false; }
-    return;
-  }
-
-  const todas = getReservas();
-  const cod = normalizarCodigo(reserva.codigo);
-  const nuevas = todas.map(r =>
-    normalizarCodigo(r.codigo) === cod
-      ? { ...r, fecha, horario }
-      : r
-  );
-  setReservas(nuevas);
-
-  // Sincronizar con Supabase
-  window.SB.actualizarReserva(reserva.codigo, { fecha, horario })
-    .catch(err => console.error('[Supabase] Error al mover:', err));
-
-  state.reservaMoviendo = null;
-  cerrarModal('modal-mover');
-  renderTodo();
-}
+/* (Las funciones abrirEditar / guardarEdicion viejas fueron eliminadas.
+   Ahora usamos abrirEditarDatos / guardarEdicionDatos, definidas más abajo.) */
 
 /* ───────────────────────────────────────────────────────────
    MOVER
@@ -1512,8 +1461,8 @@ function exportarCSV() {
    INIT
    ─────────────────────────────────────────────────────────── */
 function initBotones() {
-  const guardarEdicionBtn = $('#btn-guardar-edicion');
-  if (guardarEdicionBtn) guardarEdicionBtn.addEventListener('click', guardarEdicion);
+  const guardarEdicionDatosBtn = $('#btn-guardar-edicion-datos');
+  if (guardarEdicionDatosBtn) guardarEdicionDatosBtn.addEventListener('click', guardarEdicionDatos);
 
   const guardarMoverBtn = $('#btn-guardar-mover');
   if (guardarMoverBtn) guardarMoverBtn.addEventListener('click', guardarMover);
@@ -1536,6 +1485,9 @@ function initBotones() {
 
   const exportarBtn = $('#btn-exportar-csv');
   if (exportarBtn) exportarBtn.addEventListener('click', exportarCSV);
+
+  const exportarTodosBtn = $('#btn-exportar-csv-todos');
+  if (exportarTodosBtn) exportarTodosBtn.addEventListener('click', exportarCSV);
 }
 
 function initYear() {

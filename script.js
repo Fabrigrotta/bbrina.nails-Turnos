@@ -406,9 +406,16 @@ function renderHorarios() {
     return;
   }
 
-  // Si el día está anclado a otra zona, no mostramos horarios
+  // Si el día está anclado a OTRA zona, mostramos un aviso en lugar de horarios
   if (diaOcupadoPorOtraZona(state.fechaSeleccionada)) {
-    grid.innerHTML = '';
+    const zonaDia = zonaDelDia(state.fechaSeleccionada);
+    grid.innerHTML = `
+      <p class="horarios-aviso-zona">
+        Este día solo se atiende en <strong>${nombreZona(zonaDia)}</strong>.
+        Elegí otro día o cambiá la zona arriba.
+      </p>
+    `;
+    state.horarioSeleccionado = null;
     return;
   }
 
@@ -417,7 +424,8 @@ function renderHorarios() {
   CONFIG.horarios.forEach(hora => {
     const reservado = horarioOcupado(state.fechaSeleccionada, hora);
     const bloqueado = horarioBloqueado(state.fechaSeleccionada, hora);
-    const noDisponible = reservado || bloqueado;
+    const pasado = horarioYaPaso(state.fechaSeleccionada, hora);
+    const noDisponible = reservado || bloqueado || pasado;
 
     const btn = document.createElement('button');
     btn.type = 'button';
@@ -425,7 +433,9 @@ function renderHorarios() {
     btn.textContent = hora;
     btn.disabled = noDisponible;
 
-    if (reservado) {
+    if (pasado) {
+      btn.title = 'Ya pasó';
+    } else if (reservado) {
       btn.title = 'Ya reservado';
     } else if (bloqueado) {
       btn.title = 'No disponible';
@@ -465,7 +475,23 @@ let mesVisible = (() => {
 })();
 
 function contarLibres(fechaISO) {
-  return CONFIG.horarios.filter(h => !horarioNoDisponible(fechaISO, h)).length;
+  return CONFIG.horarios.filter(h =>
+    !horarioNoDisponible(fechaISO, h) && !horarioYaPaso(fechaISO, h)
+  ).length;
+}
+
+/* Devuelve true si ese horario ya pasó (solo aplica al día de hoy).
+   Formato esperado de `horario`: "HH:MM". */
+function horarioYaPaso(fechaISO, horario) {
+  const hoyISO = getFechaISO();
+  if (fechaISO !== hoyISO) return false;
+
+  const [hh, mm] = horario.split(':').map(Number);
+  const ahora = new Date();
+  const minutosAhora = ahora.getHours() * 60 + ahora.getMinutes();
+  const minutosHorario = hh * 60 + mm;
+
+  return minutosHorario <= minutosAhora;
 }
 
 function colorDisponibilidad(fechaISO) {
@@ -561,8 +587,9 @@ function renderCalendario() {
     const noLaborable = esDiaNoLaborable(fecha);
     const pasada = esFechaPasada(fecha);
     const sinZona = !state.zonaSeleccionada;
+    const zonaAjena = !sinZona && diaOcupadoPorOtraZona(fechaISO);
 
-    if (noLaborable || pasada || sinZona) {
+    if (noLaborable || pasada || sinZona || zonaAjena) {
       btn.disabled = true;
     }
 
@@ -668,7 +695,10 @@ function seleccionarFecha(fechaISO) {
 
   renderCalendario();
   renderHorarios();
-  actualizarBotonContinuarWizard();
+
+  if (typeof window.actualizarBotonContinuarWizard === 'function') {
+    window.actualizarBotonContinuarWizard();
+  }
 }
 
 function mostrarAvisoZona(zonaDia) {
@@ -811,7 +841,8 @@ function validarFormulario(datos) {
   if (!datos.nombre || datos.nombre.trim().length < 2) return 'Ingresá tu nombre.';
   if (!datos.whatsapp || datos.whatsapp.replace(/\D/g, '').length < 8) return 'Ingresá un WhatsApp válido.';
 
-  // Si el día está anclado a otra zona, no permitimos reservar
+  // Regla de "un día = una zona": el día debe pertenecer a la misma zona
+  // que la reserva, o estar libre.
   const zonaDia = zonaDelDia(datos.fecha);
   if (zonaDia && zonaDia !== datos.zona) {
     return `Ese día solo se atiende en ${nombreZona(zonaDia)}. Elegí otro día o esa zona.`;
@@ -1099,10 +1130,11 @@ function initFormulario() {
   function pasoEstaCompleto(n) {
     if (n === 1) return !!state.servicioSeleccionado;
     if (n === 2) {
-      return !!state.zonaSeleccionada
-          && !!state.fechaSeleccionada
-          && !!state.horarioSeleccionado
-          && !diaOcupadoPorOtraZona(state.fechaSeleccionada);
+      if (!state.zonaSeleccionada) return false;
+      if (!state.fechaSeleccionada) return false;
+      if (!state.horarioSeleccionado) return false;
+      if (diaOcupadoPorOtraZona(state.fechaSeleccionada)) return false;
+      return true;
     }
     if (n === 3) {
       const nombre = $('#input-nombre')?.value.trim() || '';

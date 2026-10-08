@@ -55,7 +55,7 @@
           <h3 class="admin-bloque-titulo">Últimos turnos reservados</h3>
           <div class="admin-bloque-acciones">
             <span class="admin-bloque-contador" id="admin-contador-recientes">— reservas</span>
-            <button type="button" id="btn-exportar-csv" class="btn btn-secondary admin-btn-sm">
+            <button type="button" id="btn-exportar-csv-todos" class="btn btn-secondary admin-btn-sm">
               Exportar CSV
             </button>
           </div>
@@ -152,34 +152,7 @@
     </div>
   </main>
 
-  <!-- ═══════════════ MODAL EDITAR ═══════════════ -->
-  <div id="modal-editar" class="modal" hidden>
-    <div class="modal-backdrop" data-close="modal-editar"></div>
-    <div class="modal-card card">
-      <h3 class="modal-titulo">Editar turno</h3>
-      <p class="modal-subtitulo" id="modal-editar-codigo">—</p>
-
-      <div class="field">
-        <label for="edit-nombre">Nombre</label>
-        <input type="text" id="edit-nombre" />
-      </div>
-      <div class="field">
-        <label for="edit-whatsapp">WhatsApp</label>
-        <input type="tel" id="edit-whatsapp" />
-      </div>
-      <div class="field">
-        <label for="edit-nota">Nota</label>
-        <textarea id="edit-nota" rows="3"></textarea>
-      </div>
-
-      <p id="edit-error" class="form-error" role="alert" hidden></p>
-
-      <div class="modal-acciones">
-        <button type="button" class="btn btn-secondary" data-close="modal-editar">Cancelar</button>
-        <button type="button" class="btn btn-primary" id="btn-guardar-edicion">Guardar cambios</button>
-      </div>
-    </div>
-  </div>
+  <!-- (Modal de editar viejo eliminado: usamos #modal-editar-datos y #modal-mover) -->
 
   <!-- ═══════════════ MODAL EDITAR (ex-Mover) ═══════════════ -->
   <div id="modal-mover" class="modal" hidden>
